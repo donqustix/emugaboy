@@ -1,0 +1,315 @@
+
+/*
+#define ST(str, code) if constexpr ((str [opcode / 6] - ' ') >> (opcode % 6) & 1) {std::cout <<#code<< std::endl;}
+                ST(R"($"(A 2(@$ #@ "(@ "(@ "(@ "(@ "(@     4 !   )", temp = A)
+                ST(R"(P         0 !$0 !$0 !$0 !$0 !$0            )", temp = B)
+                ST(R"(  #       @ "(@ "(@ "(@ "(@ "(@         $  )", temp = C)
+                ST(R"(   ,       !$0 !$0 !$0 !$0 !$0 !           )", temp = D)
+                ST(R"(    P      "(@ "(@ "(@ "(@ "(@ "           )", temp = E)
+                ST(R"(      #    $0 !$0 !$0 !$0 !$0 !$           )", temp = H)
+                ST(R"(       ,   (@ "(@ "(@ "(@ "(@ "(           )", temp = L)
+                ST(R"(                                        B  )", temp = AF)
+                ST(R"((X                              B          )", temp = BC)
+                ST(R"(   ".                             @(       )", temp = DE)
+                ST(R"(     @@#P0 0 !$0 !$  !$0 !$0 !$0     (B  ( )", temp = HL)
+                ST(R"( $      (H                               $ )", temp = SP)
+                ST(R"(    !$0 !$                                 )", temp = PC)
+                ST(R"(" @  (  "                       <0#%4    0 )", temp = nn)
+                ST(R"(      0                          4!        )", cond = cpu.get_flag(FZ))
+                ST(R"(         $                          5      )", cond = cpu.get_flag(FC))
+                ST(R"(     $                          5          )", cond = !cpu.get_flag(FZ))
+                ST(R"(        !                         0%       )", cond = !cpu.get_flag(FC))
+                ST(R"(                                        %  )", temp += 0xFF00)
+                ST(R"( !$0!%40!%$                      !$0 !40!!$)", temp += n)
+                ST(R"( 0  $  !P0 0 !$0 !$  !$0 !$0 !$0        %0 )", temp = rb(temp))
+                ST(R"(8 !&0@!$8 !                                )", ++temp)
+                ST(R"(@@"(H "*@@"                                )", --temp)
+                ST(R"(                     \__         !$        )", temp += A)
+                ST(R"(                      P_          $        )", temp += FC)
+                ST(R"(                        __/   P_   0 !    $)", temp = A - temp)
+                ST(R"(                         \/          !     )", temp -= FC)
+                ST(R"(                          P_          $    )", temp = A & temp)
+                ST(R"(                             \/          ! )", temp |= A)
+                ST(R"(                            _#         0   )", temp ^= A)
+                ST(R"( (  " @  (                                 )", temp += HL)
+                ST(R"(                                      0    )", temp += SP)
+                // temp = ~temp
+                ST(R"(                                @  (  " @  )", ww(SP -= 2, temp)) // push
+                ST(R"(                                " @  (  "  )", temp = rw(SP); SP += 2) // pop
+                ST(R"(                                0 #$0      )", if (cond) {ww(SP -= 2, PC); PC = nn;}) // call
+                ST(R"(                                 "         )", ww(SP -= 2, PC); PC = 0x00)
+                ST(R"(                                  (        )", ww(SP -= 2, PC); PC = 0x08)
+                ST(R"(                                   @       )", ww(SP -= 2, PC); PC = 0x10)
+                ST(R"(                                     "     )", ww(SP -= 2, PC); PC = 0x18)
+                ST(R"(                                      (    )", ww(SP -= 2, PC); PC = 0x20)
+                ST(R"(                                       @   )", ww(SP -= 2, PC); PC = 0x28)
+                ST(R"(                                         " )", ww(SP -= 2, PC); PC = 0x30)
+                ST(R"(                                          ()", ww(SP -= 2, PC); PC = 0x38)
+                ST(R"(                                !,0 #      )", if (cond) {PC = rw(SP); SP += 2;}) // return
+                ST(R"(    !$0 !$                      ,0 !$ @    )", if (cond) PC = temp) // jp, jr
+                ST(R"(                                     0     )", wb(0xFF00 + C, temp))
+                ST(R"(     0  $!        PO                       )", wb(HL, temp))
+                ST(R"(     0 !                                   )", HL = HL + 1)
+                ST(R"(        $0                                 )", HL = HL - 1)
+                ST(R"($                                          )", wb(BC, temp))
+                ST(R"(   !                                       )", wb(DE, temp))
+                ST(R"(                                     $     )", wb(0xFF00 + n, temp))
+                ST(R"(                                       !   )", wb(nn, temp))
+                ST(R"( $                                         )", ww(nn, temp))
+                ST(R"( 2(@$"(A 0'         __________/  !$0 !$0%1$)", A = temp)
+                ST(R"(P!        P_                               )", B = temp)
+                ST(R"(  '         _#                             )", C = temp)
+                ST(R"(   <         \/                            )", D = temp)
+                ST(R"(    P!        P_                           )", E = temp)
+                ST(R"(      '         _#                         )", H = temp)
+                ST(R"(       <         \/                        )", L = temp)
+                ST(R"(*@                              "          )", BC = temp)
+                ST(R"(  @"(                             @        )", DE = temp)
+                ST(R"( (  "H@" (                           (   $ )", HL = temp)
+                ST(R"(        *@                            0  ( )", SP = temp)
+                ST(R"(                                        "  )", AF = temp)
+#undef ST*/
+        template<unsigned mask>
+        void update_flags(unsigned value) noexcept
+        {
+            if constexpr (mask & FC) regs.AF.F &= ~(1 << FC) | (value >> 8) << FC;
+            if constexpr (mask & FH) regs.AF.F &= ~(1 << FH) | (value >> 4) << FH;
+            if constexpr (mask & FZ) regs.AF.F &= ~(1 << FZ) | !value       << FZ;
+            if constexpr (mask & FN) regs.AF.F |= FN; else regs.AF.F &= ~FN;
+        }
+    /*
+#define ST(mnemonic, id, init_cycles, code)       \
+                if constexpr((opcode & 0xFF) == id) {cycles = init_cycles; code;} else
+                    // misc/control instructions
+                    ST("NOP",      0x00, 1, )
+                    ST("STOP",     0x10, 1, )
+                    ST("HALT",     0x76, 1, )
+                    ST("DI",       0xF3, 1, )
+                    ST("EI",       0xFB, 1, )
+
+                    // 8-bit loads
+                    ST("LD  B  , B",     0x40, 1, B = B) // !!!
+                    ST("LD  D  , B",     0x50, 1, D = B)
+                    ST("LD  H  , B",     0x60, 1, H = B)
+
+                    ST("LD  B  , C",     0x41, 1, B = C)
+                    ST("LD  D  , C",     0x51, 1, D = C)
+                    ST("LD  H  , C",     0x61, 1, H = C)
+                    
+                    ST("LD (HL ), C",     0x71, 2, write(HL, C, wmode::v_8_bits))
+                    ST("LD (HL ), B",     0x70, 2, write(HL, B, wmode::v_8_bits))
+                    ST("LD (BC ), A",     0x02, 2, write(BC, A, wmode::v_8_bits))
+                    ST("LD (DE ), A",     0x12, 2, write(DE, A, wmode::v_8_bits))
+                    ST("LD (HL+), A",     0x22, 2, write(HL, A, wmode::v_8_bits); HL = HL + 1)
+                    ST("LD (HL-), A",     0x32, 2, write(HL, A, wmode::v_8_bits); HL = HL - 1)
+
+                    ST("LD  B  , D",     0x42, 1, B = D)
+                    ST("LD  D  , D",     0x52, 1, D = D) // !!!
+                    ST("LD  H  , D",     0x62, 1, H = D)
+                    ST("LD (HL), D",     0x72, 2, write(HL, D, wmode::v_8_bits))
+
+                    ST("LD  B  , E",     0x43, 1, B = E)
+                    ST("LD  D  , E",     0x53, 1, D = E)
+                    ST("LD  H  , E",     0x63, 1, H = E)
+                    ST("LD (HL), E",     0x73, 2, write(HL, D, wmode::v_8_bits))
+
+                    ST("LD  B  , H",     0x44, 1, B = H)
+                    ST("LD  D  , H",     0x54, 1, D = H)
+                    ST("LD  H  , H",     0x64, 1, H = H) // !!!
+                    ST("LD (HL), H",     0x74, 2, write(HL, H, wmode::v_8_bits))
+
+                    ST("LD  B  , L",     0x45, 1, B = L)
+                    ST("LD  D  , L",     0x55, 1, D = L)
+                    ST("LD  H  , L",     0x65, 1, H = L)
+                    ST("LD (HL), L",     0x75, 2, write(HL, L, wmode::v_8_bits))
+
+                    ST("LD  B  , n",     0x06, 2, B = n; ++PC)
+                    ST("LD  D  , n",     0x16, 2, D = n; ++PC)
+                    ST("LD  H  , n",     0x26, 2, H = n; ++PC)
+                    ST("LD (HL), n",     0x36, 3, write(HL, L, wmode::v_8_bits); ++PC)
+
+                    ST("LD B, (HL)",     0x46, 2, B = mem[HL])
+                    ST("LD D, (HL)",     0x56, 2, D = mem[HL])
+                    ST("LD H, (HL)",     0x66, 2, H = mem[HL])
+
+                    ST("LD  B  , A",     0x47, 1, B = A)
+                    ST("LD  D  , A",     0x57, 1, D = A)
+                    ST("LD  H  , A",     0x67, 1, H = A)
+                    ST("LD (HL), A",     0x77, 2, write(HL, A, wmode::v_8_bits))
+
+                    ST("LD C, B",     0x48, 1, C = B)
+                    ST("LD E, B",     0x58, 1, E = B)
+                    ST("LD L, B",     0x68, 1, L = B)
+                    ST("LD A, B",     0x78, 1, A = B)
+
+                    ST("LD C, C",     0x49, 1, C = C) // !!!
+                    ST("LD E, C",     0x59, 1, E = C)
+                    ST("LD L, C",     0x69, 1, L = C)
+                    ST("LD A, C",     0x79, 1, A = C)
+
+                    ST("LD A, (BC )",     0x0A, 2, A = mem[BC])
+                    ST("LD A, (DE )",     0x1A, 2, A = mem[DE])
+                    ST("LD A, (HL+)",     0x2A, 2, A = mem[HL]; HL = HL + 1)
+                    ST("LD A, (HL-)",     0x3A, 2, A = mem[HL]; HL = HL - 1)
+
+                    ST("LD C, D",     0x4A, 1, C = D)
+                    ST("LD E, D",     0x5A, 1, E = D)
+                    ST("LD L, D",     0x6A, 1, L = D)
+                    ST("LD A, D",     0x7A, 1, A = D)
+
+                    ST("LD C, E",     0x4B, 1, C = E)
+                    ST("LD E, E",     0x5B, 1, E = E) // !!!
+                    ST("LD L, E",     0x6B, 1, L = E)
+                    ST("LD A, E",     0x7B, 1, A = E)
+
+                    ST("LD C, H",     0x4C, 1, C = H)
+                    ST("LD E, H",     0x5C, 1, E = H)
+                    ST("LD L, H",     0x6C, 1, L = H)
+                    ST("LD A, H",     0x7C, 1, A = H)
+
+                    ST("LD C, L",     0x4D, 1, C = L)
+                    ST("LD E, L",     0x5D, 1, E = L)
+                    ST("LD L, L",     0x6D, 1, L = L) // !!!
+                    ST("LD A, L",     0x7D, 1, A = L)
+
+                    ST("LD C, n",     0x0E, 2, C = n; ++PC)
+                    ST("LD E, n",     0x1E, 2, E = n; ++PC)
+                    ST("LD L, n",     0x2E, 2, L = n; ++PC)
+                    ST("LD A, n",     0x3E, 2, A = n; ++PC)
+
+                    ST("LD C, (HL)",     0x4E, 2, C = mem[HL])
+                    ST("LD E, (HL)",     0x5E, 2, E = mem[HL])
+                    ST("LD L, (HL)",     0x6E, 2, L = mem[HL])
+                    ST("LD A, (HL)",     0x7E, 2, A = mem[HL])
+
+                    ST("LD C, A",     0x4F, 1, C = A)
+                    ST("LD E, A",     0x5F, 1, E = A)
+                    ST("LD L, A",     0x6F, 1, L = A)
+                    ST("LD A, A",     0x7F, 1, A = A) // !!!
+
+                    ST("LDH (n), A",     0xE0, 3, write(0xFF00 + n, A, wmode::v_8_bits); ++PC     )
+                    ST("LD  (C), A",     0xE2, 2, write(0xFF00 + C, A, wmode::v_8_bits); ++PC     )
+                    ST("LD (nn), A",     0xEA, 4, write(nn        , A, wmode::v_8_bits);   PC += 2)
+
+                    ST("LDH A, (n )",     0xF0, 3, A = mem[0xFF00 + n]; ++PC     )
+                    ST("LD  A, (C )",     0xF2, 2, A = mem[0xFF00 + C]; ++PC     )
+                    ST("LD  A, (nn)",     0xFA, 4, A = mem[nn        ];   PC += 2)
+
+                    // 16-bit loads
+                    ST("LD BC, nn",     0x01, 3, BC = nn; PC += 2)
+                    ST("LD DE, nn",     0x11, 3, DE = nn; PC += 2)
+                    ST("LD HL, nn",     0x21, 3, HL = nn; PC += 2)
+                    ST("LD SP, nn",     0x31, 3, SP = nn; PC += 2)
+
+                    ST("LD (nn), SP",     0x08, 5, write(nn, SP, wmode::v_16_bits); PC += 2)
+                    ST("LD  SP , HL",     0xF9, 2, SP = HL)
+
+                    ST("POP BC",     0xC1, 3, BC = mem[SP] | mem[SP + 1] << 8; SP += 2)
+                    ST("POP DE",     0xD1, 3, DE = mem[SP] | mem[SP + 1] << 8; SP += 2)
+                    ST("POP HL",     0xE1, 3, HL = mem[SP] | mem[SP + 1] << 8; SP += 2)
+                    ST("POP AF",     0xF1, 3, AF = mem[SP] | mem[SP + 1] << 8; SP += 2)
+
+                    ST("PUSH BC",     0xC5, 4, write(SP -= 2, BC, wmode::v_16_bits))
+                    ST("PUSH DE",     0xD5, 4, write(SP -= 2, DE, wmode::v_16_bits))
+                    ST("PUSH HL",     0xE5, 4, write(SP -= 2, HL, wmode::v_16_bits))
+                    ST("PUSH AF",     0xF5, 4, write(SP -= 2, AF, wmode::v_16_bits))
+
+                    ST("LDHL SP, n",     0xF8, 3, const unsigned tmp = SP + n; HL = tmp; cpu.update_flags<FZ | 0 | FH | FC>(tmp); ++PC)
+
+                    // jumps/calls
+                    ST("JR NZ, n",     0x20, 2, if (!cpu.get_flag(FZ)) {PC += n; ++cycles;})
+                    ST("JR NC, n",     0x30, 2, if (!cpu.get_flag(FC)) {PC += n; ++cycles;})
+
+                    ST("JR Z, n",     0x28, 2, if (cpu.get_flag(FZ)) {PC += n; ++cycles;})
+                    ST("JR C, n",     0x38, 2, if (cpu.get_flag(FC)) {PC += n; ++cycles;})
+
+                    ST("JR n",     0x18, 3, PC += n)
+
+                    ST("RET NZ",     0xC0, 2, if (!cpu.get_flag(FZ)) {PC = mem[SP] | mem[SP + 1]; SP += 2; cycles += 3;})
+                    ST("RET NC",     0xD0, 2, if (!cpu.get_flag(FC)) {PC = mem[SP] | mem[SP + 1]; SP += 2; cycles += 3;})
+
+                    ST("JP NZ, nn",     0xC2, 3, if (!cpu.get_flag(FZ)) {PC = nn; ++cycles;})
+                    ST("JP NC, nn",     0xD2, 3, if (!cpu.get_flag(FC)) {PC = nn; ++cycles;})
+
+                    ST("JP nn",     0xC3, 4, PC = nn)
+
+                    ST("CALL NZ, nn",     0xC4, 3, if (!cpu.get_flag(FZ)) {write(SP -= 2, PC, wmode::v_16_bits); PC = nn; cycles += 3;})
+                    ST("CALL NC, nn",     0xD4, 3, if (!cpu.get_flag(FC)) {write(SP -= 2, PC, wmode::v_16_bits); PC = nn; cycles += 3;})
+
+                    ST("RST 00H",     0xC7, 4, write(SP -= 2, PC, wmode::v_16_bits); PC = 0x00)
+                    ST("RST 10H",     0xD7, 4, write(SP -= 2, PC, wmode::v_16_bits); PC = 0x10)
+                    ST("RST 20H",     0xE7, 4, write(SP -= 2, PC, wmode::v_16_bits); PC = 0x20)
+                    ST("RST 30H",     0xF7, 4, write(SP -= 2, PC, wmode::v_16_bits); PC = 0x30)
+
+                    ST("RET Z",     0xC8, 2, if (cpu.get_flag(FZ)) {PC = mem[SP] | mem[SP + 1]; SP += 2; cycles += 3;})
+                    ST("RET C",     0xD8, 2, if (cpu.get_flag(FC)) {PC = mem[SP] | mem[SP + 1]; SP += 2; cycles += 3;})
+
+                    ST("RET",      0xC9, 4, PC = mem[SP] | mem[SP + 1] << 8; SP += 2)
+                    ST("RETI",     0xD9, 4, PC = mem[SP] | mem[SP + 1] << 8; SP += 2) // !!! interrupts !!!
+
+                    ST("JP (HL)",     0xE9, 1, PC = mem[HL])
+
+                    ST("JP Z, nn",     0xCA, 3, if (cpu.get_flag(FZ)) {PC = nn; ++cycles;})
+                    ST("JP C, nn",     0xDA, 3, if (cpu.get_flag(FC)) {PC = nn; ++cycles;})
+
+                    ST("CALL Z, nn",     0xCC, 3, if (cpu.get_flag(FZ)) {write(SP -= 2, PC, wmode::v_16_bits); PC = nn; cycles += 3;})
+                    ST("CALL C, nn",     0xDC, 3, if (cpu.get_flag(FC)) {write(SP -= 2, PC, wmode::v_16_bits); PC = nn; cycles += 3;})
+
+                    ST("CALL nn",     0xCD, 6, write(SP -= 2, PC, wmode::v_16_bits); PC = nn)
+
+                    ST("RST 08H",     0xCF, 4, write(SP -= 2, PC, wmode::v_16_bits); PC = 0x08)
+                    ST("RST 18H",     0xDF, 4, write(SP -= 2, PC, wmode::v_16_bits); PC = 0x18)
+                    ST("RST 28H",     0xEF, 4, write(SP -= 2, PC, wmode::v_16_bits); PC = 0x28)
+                    ST("RST 38H",     0xFF, 4, write(SP -= 2, PC, wmode::v_16_bits); PC = 0x38)
+
+                    // 8-bit arithmetic/logical instructions
+                    ST("INC (HL)",  0x34, 3, const unsigned tmp = mem[HL] + 1; write(HL, tmp, wmode::v_8_bits); cpu.update_flags<FZ |  0 | FH | 0>(tmp))
+                    ST("DEC HL",    0x35, 3, const unsigned tmp = mem[HL] - 1; write(HL, tmp, wmode::v_8_bits); cpu.update_flags<FZ | FN | FH | 0>(tmp))
+
+#define INST_FLAGS(obj, operation, flags) const unsigned tmp = obj operation; obj = tmp; cpu.update_flags<flags>(tmp)
+                    ST("INC B",     0x04, 1, INST_FLAGS(B, +1, FZ | 0 | FH | 0))
+                    ST("INC D",     0x14, 1, INST_FLAGS(D, +1, FZ | 0 | FH | 0))
+                    ST("INC H",     0x24, 1, INST_FLAGS(H, +1, FZ | 0 | FH | 0))
+
+                    ST("DEC B",     0x05, 1, INST_FLAGS(B, -1, FZ | FN | FH | 0))
+                    ST("DEC D",     0x15, 1, INST_FLAGS(D, -1, FZ | FN | FH | 0))
+                    ST("DEC H",     0x25, 1, INST_FLAGS(H, -1, FZ | FN | FH | 0))
+
+                    ST("INC C",     0x0C, 1, INST_FLAGS(C, +1, FZ | 0 | FH | 0))
+                    ST("INC E",     0x1C, 1, INST_FLAGS(E, +1, FZ | 0 | FH | 0))
+                    ST("INC L",     0x2C, 1, INST_FLAGS(L, +1, FZ | 0 | FH | 0))
+                    ST("INC A",     0x3C, 1, INST_FLAGS(A, +1, FZ | 0 | FH | 0))
+
+                    ST("DEC C",     0x0D, 1, INST_FLAGS(C, -1, FZ | FN | FH | 0))
+                    ST("DEC E",     0x1D, 1, INST_FLAGS(E, -1, FZ | FN | FH | 0))
+                    ST("DEC L",     0x2D, 1, INST_FLAGS(L, -1, FZ | FN | FH | 0))
+                    ST("DEC A",     0x3D, 1, INST_FLAGS(A, -1, FZ | FN | FH | 0))
+
+                    ST("ADD A, B",     0x80, 1, INST_FLAGS(A, +B, FZ | 0 | FH | FC))
+                    ST("ADD A, C",     0x81, 1, INST_FLAGS(A, +C, FZ | 0 | FH | FC))
+                    ST("ADD A, D",     0x82, 1, INST_FLAGS(A, +D, FZ | 0 | FH | FC))
+                    ST("ADD A, E",     0x83, 1, INST_FLAGS(A, +E, FZ | 0 | FH | FC))
+                    ST("ADD A, H",     0x84, 1, INST_FLAGS(A, +H, FZ | 0 | FH | FC))
+                    ST("ADD A, L",     0x85, 1, INST_FLAGS(A, +L, FZ | 0 | FH | FC))
+                    
+                    ST("ADD A, (HL)",     0x86, 2, INST_FLAGS(A, +mem[HL], FZ | 0 | FH | FC))
+
+                    ST("ADD A, A",     0x87, 1, INST_FLAGS(A, +A, FZ | 0 | FH | FC)      )
+                    ST("ADD A, n",     0xC6, 2, INST_FLAGS(A, +n, FZ | 0 | FH | FC); ++PC)
+
+                    ST("SUB B",     0x90, 1, INST_FLAGS(A, -B, FZ | FN | FH | FC))
+                    ST("SUB C",     0x91, 1, INST_FLAGS(A, -C, FZ | FN | FH | FC))
+                    ST("SUB D",     0x92, 1, INST_FLAGS(A, -D, FZ | FN | FH | FC))
+                    ST("SUB E",     0x93, 1, INST_FLAGS(A, -E, FZ | FN | FH | FC))
+                    ST("SUB H",     0x94, 1, INST_FLAGS(A, -H, FZ | FN | FH | FC))
+                    ST("SUB L",     0x95, 1, INST_FLAGS(A, -L, FZ | FN | FH | FC))
+                    
+                    ST("SUB (HL)",     0x96, 2, INST_FLAGS(A, -mem[HL], FZ | FN | FH | FC))
+
+                    ST("SUB A",     0x97, 1, INST_FLAGS(A, -A, FZ | FN | FH | FC)      )
+                    ST("SUB n",     0xD6, 2, INST_FLAGS(A, -n, FZ | FN | FH | FC); ++PC)
+
+                    ST("AND B",     0xA0, 1, INST_FLAGS(A, &B, FZ | 0 | FH | FC))
+#undef INST_FLAGS
+                    {}
+#undef st*/

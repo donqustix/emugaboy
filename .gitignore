@@ -1,0 +1,5 @@
+bin/
+res/docs/
+res/roms/
+.*
+!/.gitignore
