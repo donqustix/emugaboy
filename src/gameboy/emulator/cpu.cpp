@@ -6,19 +6,18 @@ unsigned CPU::next_step(const MMU& mmu) noexcept
 {
     if (interrupt_master_enable)
     {
-        const auto mask = IF & IE & 0x1F;
+        const unsigned mask = IF & IE & 0x1F;
         if (mask)
         {
             interrupt_master_enable = false;
-            for (unsigned i = 0; i < 5; ++i)
-            {
-                if (mask >> i & 1)
-                {
-                    static constexpr unsigned values[]{0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
-                    mmu.write_word(regs.SP -= 2, regs.PC); regs.PC = values[i];
-                    IF &= ~(1 << i);
-                }
-            }
+            int i = 0;
+            for (; mask >> i ^ 1; ++i)
+                 ;
+            IF &= ~(1 << i);
+
+            static constexpr unsigned values[]{0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
+            mmu.write_word(regs.SP -= 2, regs.PC); regs.PC = values[i];
+
             return 5;
         }
     }
