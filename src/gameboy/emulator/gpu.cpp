@@ -2,6 +2,10 @@
 
 using gameboy::emulator::GPU;
 
+void GPU::scanline() noexcept
+{
+}
+
 unsigned GPU::tick(unsigned cycles) noexcept
 {
     unsigned interrupts = 0;
@@ -33,7 +37,7 @@ unsigned GPU::tick(unsigned cycles) noexcept
                 if (mode_clock >= 114)
                 {
                     mode_clock -= 114;
-                    if (++ly == 154) // ???
+                    if (++ly == 154)
                     {
                         stat = (stat & ~STAT_MASK_MODE_FLAG) | STAT_MODE_READ_OAM;
                         ly = 0;
@@ -56,6 +60,7 @@ unsigned GPU::tick(unsigned cycles) noexcept
                     stat = (stat & ~STAT_MASK_MODE_FLAG) | STAT_MODE_HBLANK;
                     if (interrupts & STAT_MASK_HBLANK_INTERRUPT)
                         interrupts |= INTERRUPT_MASK_LCDC_STATUS;
+                    scanline();
                 }
                 break;
         }

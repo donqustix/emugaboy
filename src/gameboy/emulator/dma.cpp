@@ -9,15 +9,13 @@ void DMA::tick(unsigned cycles) noexcept
 {
     if (enabled)
     {
-        proc_clock += cycles;
-        if (proc_clock >= 4)
+        while (cycles --> 0)
         {
-            proc_clock -= 4;
             if (init) init = false;
             else
             {
                 gpu->write_oam(dst_address++, mmu->read_byte(src_address++));
-                enabled = dst_address != 0xA0;
+                if (dst_address == 0xA0) enabled = false;
             }
         }
     }
@@ -25,8 +23,8 @@ void DMA::tick(unsigned cycles) noexcept
 
 void DMA::enable_transfer(unsigned value) noexcept
 {
-    dst_address = proc_clock = 0; 
     src_address = value << 8;
+    dst_address = 0; 
     enabled = init = true;
 }
 

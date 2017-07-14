@@ -2,31 +2,24 @@
 
 using gameboy::emulator::CPU;
 
-void CPU::reset() noexcept
-{
-    regs.AF = 0x01B0;
-    regs.BC = 0x0013;
-    regs.DE = 0x00D8;
-    regs.HL = 0x014D;
-    regs.PC = 0x0100;
-    regs.SP = 0xFFFE;
-}
-
 unsigned CPU::next_step(const MMU& mmu) noexcept
 {
     if (interrupt_master_enable)
     {
-        interrupt_master_enable = false;
-        const auto mask = IF & IE;
-        for (unsigned i = 0; i < 5; ++i)
+        const auto mask = IF & IE & 0x1F;
+        if (mask)
         {
-            if (mask >> i & 1)
+            interrupt_master_enable = false;
+            for (unsigned i = 0; i < 5; ++i)
             {
-                static constexpr unsigned values[]{0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
-                mmu.write_word(regs.SP -= 2, regs.PC); regs.PC = values[i];
-                mmu.write_byte(0xFF0F, IF & ~(1 << i));
-                return 5;
+                if (mask >> i & 1)
+                {
+                    static constexpr unsigned values[]{0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
+                    mmu.write_word(regs.SP -= 2, regs.PC); regs.PC = values[i];
+                    IF &= ~(1 << i);
+                }
             }
+            return 5;
         }
     }
     // build a table of opcodes
@@ -50,7 +43,7 @@ unsigned CPU::next_step(const MMU& mmu) noexcept
     if ((opcode & 0xFF) == 0xCB)
          opcode = mmu.read_byte(regs.PC++) + 256;
 
-    std::clog << regs.PC << std::endl;
+    //std::clog << regs.PC << std::endl;
 
     return (insts[opcode])(*this, mmu);
 }

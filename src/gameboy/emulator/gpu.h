@@ -32,8 +32,14 @@ namespace gameboy::emulator
     public:
         unsigned char vram[0x2000];
         unsigned char  oam[0x00A0];
-        unsigned char control = 0x91, stat, ly, lyc = 0;
+        unsigned char control = 0x91, stat;
+        unsigned char scy = 0, scx = 0, ly, lyc = 0, wy = 0, wx = 0;
+        unsigned char bgp = 0xFC;
+        unsigned char obp0 = 0xFF, obp1 = 0xFF;
+        unsigned char framebuffer[160 * 144 / 8];
         unsigned mode_clock = 0;
+
+        void scanline() noexcept;
     public:
         void write_oam(unsigned index, unsigned value) noexcept {oam[index] = value;}
         unsigned tick(unsigned cycles) noexcept;

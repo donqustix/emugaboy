@@ -48,9 +48,9 @@ unsigned MMU::read_byte(unsigned address) const noexcept
     else if (address < 0xFF80)
         switch (address)
         {
-            case 0xFF0F: return mem_pointers.cpu->IF;
+            case 0xFF0F: return mem_pointers.cpu->IF        | 0xE0;
             case 0xFF40: return mem_pointers.gpu->control;
-            case 0xFF41: return mem_pointers.gpu->stat;
+            case 0xFF41: return mem_pointers.gpu->stat      | 0x80;
             case 0xFF44: return mem_pointers.gpu->ly;
             case 0xFF45: return mem_pointers.gpu->lyc;
             default:

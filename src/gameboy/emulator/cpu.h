@@ -8,7 +8,6 @@
 
 namespace gameboy::emulator
 {
-    enum class Interrupts;
     class CPU
     {
         friend MMU;
@@ -37,9 +36,21 @@ namespace gameboy::emulator
             unsigned short PC;
         } regs;
 
+    public:
+        CPU() noexcept
+        {
+            regs.AF = 0x01B0;
+            regs.BC = 0x0013;
+            regs.DE = 0x00D8;
+            regs.HL = 0x014D;
+            regs.PC = 0x0100;
+            regs.SP = 0xFFFE;
+        }
+
+    private:
         unsigned char IE = 0;
-        unsigned char IF = 0;
-        bool interrupt_master_enable = true;
+        unsigned char IF;
+        bool interrupt_master_enable;
 
         enum FlagMasks {
             MC = 0b0001'0000,
@@ -489,7 +500,6 @@ namespace gameboy::emulator
 
     public:
         void request_interrupts(unsigned mask) noexcept {IF |= mask;}
-        void reset() noexcept;
         unsigned next_step(const MMU& mmu) noexcept;
     };
 }

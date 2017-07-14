@@ -10,8 +10,8 @@ namespace gameboy::emulator
     {
         GPU* gpu;
         MMU* mmu;
-        unsigned src_address, dst_address;
-        unsigned proc_clock;
+        unsigned src_address;
+        unsigned dst_address;
         bool enabled = false, init;
     public:
         DMA(GPU* gpu, MMU* mmu) noexcept : gpu{gpu}, mmu{mmu} {}
