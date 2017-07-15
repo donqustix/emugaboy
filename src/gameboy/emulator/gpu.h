@@ -29,20 +29,28 @@ namespace gameboy::emulator
             CONTROL_MASK_WINDOW_TILE_MAP_DISPLAY_SELECT = 0b01000000,
             CONTROL_MASK_LCD_DISPLAY_ENABLE             = 0b10000000
         };
-    public:
+
         unsigned char vram[0x2000];
         unsigned char  oam[0x00A0];
-        unsigned char control = 0x91, stat;
-        unsigned char scy = 0, scx = 0, ly, lyc = 0, wy = 0, wx = 0;
-        unsigned char bgp = 0xFC;
-        unsigned char obp0 = 0xFF, obp1 = 0xFF;
-        unsigned char framebuffer[160 * 144 / 8];
+
+        unsigned char control = 0x91, stat = 0x06;
+        unsigned char scy = 0,
+                      scx = 0, ly = 0, lyc = 0, wy = 0,
+                                                wx = 0;
+        unsigned char bgp = 0xFC, obp0 = 0xFF,
+                                  obp1 = 0xFF;
+
+        unsigned char framebuffer[160 * 144 / 8 * 2];
         unsigned mode_clock = 0;
 
+        void scanline_background() noexcept;
+        void scanline_sprites() noexcept;
         void scanline() noexcept;
     public:
         void write_oam(unsigned index, unsigned value) noexcept {oam[index] = value;}
+        void write_lcd_control(unsigned value) noexcept;
         unsigned tick(unsigned cycles) noexcept;
+        const unsigned char* get_framebuffer() const noexcept {return framebuffer;}
     };
 }
 

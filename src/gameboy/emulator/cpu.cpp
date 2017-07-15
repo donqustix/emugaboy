@@ -27,7 +27,7 @@ unsigned CPU::next_step(const MMU& mmu) noexcept
 #define a(p,n) ExecuteInstruction<p, n    >::exec,   \
                ExecuteInstruction<p, n + 1>::exec,
 
-#define b(p,n) a(p,n)a(p,n+2)a(p,n+04)a(p,n+06)//vorecci
+#define b(p,n) a(p,n)a(p,n+2)a(p,n+04)a(p,n+06)// v o r e cc ii .(o v  o ). v o r aa n t i
 #define c(p,n) b(p,n)b(p,n+8)b(p,n+16)b(p,n+24)b(p,n+32)b(p,n+40)b(p,n+48)b(p,n+56)
 
         c(0,0)c(0,64)c(0,128)c(0,192)
@@ -41,8 +41,6 @@ unsigned CPU::next_step(const MMU& mmu) noexcept
     unsigned opcode = mmu.read_byte(regs.PC++);
     if ((opcode & 0xFF) == 0xCB)
          opcode = mmu.read_byte(regs.PC++) + 256;
-
-    //std::clog << regs.PC << std::endl;
 
     return (insts[opcode])(*this, mmu);
 }

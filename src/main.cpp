@@ -38,13 +38,23 @@ int main()
         std::cin.get(c);
         if (c == 'f')
         {
-            for (int i = 0; i < 5000; ++i)
+            for (int i = 0; i < 1500; ++i)
                 tick();
         }
         else if (c == 'd')
         {
-            for (int i = 0; i < 0x800; ++i)
-                std::clog << std::hex << 0x8000 + i << " = " << (int) gpu.vram[i] << std::endl;
+            const unsigned char* const framebuffer = gpu.get_framebuffer();
+            for (int i = 0; i < 144; ++i)
+            {
+                for (int j = 0; j < 160; ++j)
+                {
+                    std::clog << unsigned((framebuffer[(j + i * 160) / 8 * 2] >> (6 - (j % 4) * 2)) & 3);
+                }
+                std::clog << std::endl;
+            }
+            std::clog << std::endl;
+            //for (int i = 0; i < 0x800; ++i)
+            //    std::clog << std::hex << 0x8000 + i << " = " << (int) gpu.vram[i] << std::endl;
         }
         else
         {
