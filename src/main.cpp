@@ -25,13 +25,69 @@ int main()
     mem_pointers.hram = hram;
     mmu.set_mem_pointers(mem_pointers);
 
-    auto tick = [&] {
-        const unsigned cycles = cpu.next_step(mmu);
-        dma.tick(cycles);
-        const unsigned interrupts = gpu.tick(cycles);
-        cpu.request_interrupts(interrupts);
-    };
+    ::SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
+    SDL_Window* const window = ::SDL_CreateWindow("Uncomplicated Gameboy", 0, 0, 640, 480, SDL_WINDOW_RESIZABLE);
+    SDL_Renderer* const renderer = ::SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Texture* const texture = ::SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING, 160, 144);
+    SDL_Event event;
+    const unsigned seconds_per_update = 1000 / 60, insts_per_update = 1048576 / 60;
+    unsigned acc_update_time = 0;
+    Uint32 previous_time = ::SDL_GetTicks();
+    for (bool running = true; running;)
+    {
+        const Uint32 current_time = ::SDL_GetTicks();
+        acc_update_time += current_time - previous_time;
 
+        previous_time = current_time;
+
+        while (::SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT) running = false;
+            else if (event.type == SDL_KEYDOWN)
+            {
+                if (event.key.keysym.scancode == SDL_SCANCODE_D)
+                {
+                    for (unsigned i = 0; i < insts_per_update; ++i)
+                    {
+                        const unsigned cycles = cpu.next_step(mmu);
+                        dma.tick(cycles);
+                        const unsigned interrupts = gpu.tick(cycles);
+                        cpu.request_interrupts(interrupts);
+                    }
+                }
+            }
+        }
+
+        for (; acc_update_time >= seconds_per_update; acc_update_time -= seconds_per_update)
+        {
+        }
+        Uint32* pixels;
+        int pitch;
+
+        ::SDL_LockTexture(texture, nullptr, reinterpret_cast<void**>(&pixels), &pitch);
+        const unsigned char* const framebuffer = gpu.get_framebuffer();
+        for (int i = 0; i < 144; ++i)
+        {
+            for (int j = 0; j < 160; ++j)
+            {
+                // 11 11 11 11 , 11 11 11 11
+                const unsigned px = (framebuffer[(j + i * 160) / 4] >> (6 - j % 4 * 2) & 3);
+                pixels[j + i * 160] = 0xFF000000 | (0x00FFFFFF * ((3 - px) / 3));
+            }
+        }
+        ::SDL_UnlockTexture(texture);
+
+        ::SDL_RenderClear(renderer);
+        ::SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+        ::SDL_RenderPresent(renderer);
+        ::SDL_Delay(5);
+    }
+    ::SDL_DestroyTexture(texture);
+    ::SDL_DestroyRenderer(renderer);
+    ::SDL_DestroyWindow(window);
+    ::SDL_Quit();
+/*
     char c;
     do
     {
@@ -61,65 +117,8 @@ int main()
             tick();
         }
     }
-    while (c != 'e');
+    while (c != 'e');*/
 
-        /*
-        Uint32 previous_time = ::SDL_GetTicks();
-
-        for (bool running = true; running;)
-        {
-            const Uint32 current_time = ::SDL_GetTicks();
-            const Uint32 elapsed_time = current_time - previous_time;
-            previous_time = current_time;
-
-            for (unsigned cycles = 1048576 * elapsed_time / 1000; cycles; cycles -= cpu.next_step(mmu))
-            {
-            }
-            ::SDL_Delay(1);
-        }
-        ::SDL_Quit();
-    }*/
-    /*
-    if (::SDL_Init(SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_VIDEO) >= 0)
-    {
-        SDL_Window* const window = ::SDL_CreateWindow("GameBoy", 100, 100, 640, 480, SDL_WINDOW_RESIZABLE);
-        SDL_Renderer* const renderer = ::SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-        SDL_Event event;
-
-        Uint32 previous_time = ::SDL_GetTicks();
-
-        for (bool running = true; running;)
-        {
-            const Uint32 current_time = ::SDL_GetTicks();
-            const Uint32 elapsed_time = current_time - previous_time;
-
-            previous_time = current_time;
-
-            while (::SDL_PollEvent(&event))
-            {
-                if (event.type == SDL_QUIT)
-                    running = false;
-            }
-
-            for (unsigned cycles = 1048576 * elapsed_time / 1000; cycles; --cycles)
-            {
-                // ...
-            }
-
-            ::SDL_RenderClear(renderer);
-            ::SDL_RenderPresent(renderer);
-
-            ::SDL_Delay(1);
-        }
-
-        ::SDL_DestroyRenderer(renderer);
-        ::SDL_DestroyWindow(window);
-        ::SDL_Quit();
-    }
-    else
-        std::cerr << "SDL initialization error: " << ::SDL_GetError() << std::endl;
-*/
     return 0;
 }
 

@@ -1,6 +1,8 @@
 #ifndef GPU_H
 #define GPU_H
 
+#include <iostream>
+
 namespace gameboy::emulator
 {
     class GPU
@@ -30,6 +32,7 @@ namespace gameboy::emulator
             CONTROL_MASK_LCD_DISPLAY_ENABLE             = 0b10000000
         };
 
+    public:
         unsigned char vram[0x2000];
         unsigned char  oam[0x00A0];
 
@@ -43,12 +46,11 @@ namespace gameboy::emulator
         unsigned char framebuffer[160 * 144 / 8 * 2];
         unsigned mode_clock = 0;
 
-        void scanline_background() noexcept;
-        void scanline_sprites() noexcept;
         void scanline() noexcept;
     public:
         void write_oam(unsigned index, unsigned value) noexcept {oam[index] = value;}
         void write_lcd_control(unsigned value) noexcept;
+        void write_lcd_stat(unsigned value) noexcept {std::clog<<"awd "<<value<<std::endl;stat &= 7; stat |= value & ~7;}
         unsigned tick(unsigned cycles) noexcept;
         const unsigned char* get_framebuffer() const noexcept {return framebuffer;}
     };

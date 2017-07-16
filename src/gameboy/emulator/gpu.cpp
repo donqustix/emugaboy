@@ -4,35 +4,33 @@
 
 using gameboy::emulator::GPU;
 
-void GPU::scanline_background() noexcept
-{
-}
-
-void GPU::scanline_sprites() noexcept
-{
-}
-
 void GPU::scanline() noexcept
 {
-    const unsigned bg_tiles_address = control & CONTROL_MASK_BG_WINDOW_TILE_DATA_SELECT ? 0x8000 : 0x8800;
-    const unsigned bg_map_address   = control & CONTROL_MASK_BG_TILE_MAP_DISPLAY_SELECT ? 0x9C00 : 0x9800;
-
-    for (int i = 0; i < 160; ++i)
+    if (control & CONTROL_MASK_BG_DISPLAY)
     {
-        const unsigned tile_address = 2;
+        const int st = control & CONTROL_MASK_BG_WINDOW_TILE_DATA_SELECT ? 0x0000 : 0x0800;
+        const int sm = control & CONTROL_MASK_BG_TILE_MAP_DISPLAY_SELECT ? 0x1C00 : 0x1800;
+        for (int i = 0; i < 160; ++i)
+        {
+            const int im = sm + (scx + i) / 8 % 32 + (scy + ly) / 8 % 32 * 32;
+            const int vm = st == 0x0000 ?               vram[im] :
+                                          (signed char) vram[im] + 128;
+            const unsigned px =
+                (vram[st + vm * 16 + (scy + ly) % 8 * 2    ] >> (7 - (scx + i) % 8) & 1) << 1 |
+                (vram[st + vm * 16 + (scy + ly) % 8 * 2 + 1] >> (7 - (scx + i) % 8) & 1);
 
-        const unsigned pixel = 2;
+            framebuffer[(i + ly * 160) / 8 * 2] &= ~((px << 6) >> i % 8 * 2);
+            framebuffer[(i + ly * 160) / 8 * 2] |=   (px << 6) >> i % 8 * 2;
 
-        const unsigned pixel_mask = pixel << (6 - (i % 4) * 2);
-        const int index = (i + ly * 160) / 8 * 2;
-
-        framebuffer[index] &= ~pixel_mask;
-        framebuffer[index] |=  pixel_mask;
+            framebuffer[(i + ly * 160) / 8 * 2 + 1] &= ~((px << 14) >> (i % 8 * 2));
+            framebuffer[(i + ly * 160) / 8 * 2 + 1] |=   (px << 14) >> (i % 8 * 2);
+        }
     }
 }
 
 void GPU::write_lcd_control(unsigned value) noexcept
 {
+    std::clog << value << std::endl;
     if ((control = value) & CONTROL_MASK_LCD_DISPLAY_ENABLE) {
         stat = (stat & ~STAT_MASK_MODE_FLAG) | STAT_MODE_READ_OAM;   mode_clock = 0;
     }

@@ -71,9 +71,10 @@ namespace gameboy::emulator
             // return a result of the opcode execution
             static unsigned exec(CPU& cpu, const MMU& mmu) noexcept
             {
+                /*
                 std::clog << "PC = " << cpu.regs.PC << std::endl;
                 std::clog << std::endl;
-                std::clog << "opcode = " << std::hex << opcode << std::endl;
+                std::clog << "opcode = " << std::hex << opcode << std::endl;*/
                 [[maybe_unused]]
                 auto rb = [&mmu](unsigned index) noexcept {return mmu.read_byte(index);};
                 [[maybe_unused]]
@@ -94,6 +95,7 @@ namespace gameboy::emulator
                 [[maybe_unused]] auto& PC = cpu.regs.PC;
                 [[maybe_unused]] auto& SP = cpu.regs.SP;
 
+                /*
                 std::clog << "AF = " << AF << std::endl;
                 std::clog << "BC = " << BC << std::endl;
                 std::clog << "DE = " << DE << std::endl;
@@ -103,12 +105,12 @@ namespace gameboy::emulator
                 std::clog << "FZ = " << cpu.get_flag(MZ) << std::endl;
                 std::clog << "FN = " << cpu.get_flag(MN) << std::endl;
                 std::clog << "FH = " << cpu.get_flag(MH) << std::endl;
-                std::clog << "FC = " << cpu.get_flag(MC) << std::endl;
+                std::clog << "FC = " << cpu.get_flag(MC) << std::endl;*/
 
                 unsigned cycles = 0;
 
 #define ST(mnemonic, id, init_cycles, code)       \
-                if constexpr(opcode == id) {cycles = init_cycles; code;std::clog<<#mnemonic<<std::endl;} else
+                if constexpr(opcode == id) {cycles = init_cycles; code;/*std::clog<<#mnemonic<<std::endl;*/} else
                     // misc/control instructions
                     ST("NOP",      0x00, 1, )
                     ST("STOP",     0x10, 0, ) // !!!
@@ -244,7 +246,7 @@ namespace gameboy::emulator
                     ST("PUSH AF",     0xF5, 4, ww(SP -= 2, AF))
 
                     ST("LDHL SP, n",     0xF8, 3,
-                            const signed char n = rb(PC++);
+                            const auto        n = (signed char) rb(PC++);
                             const unsigned temp = SP + n; HL = temp;
                             cpu.set_flags((temp >> 16) << SC | (((SP & 0xFFF) + n) >> 12) << SH)
                     )
@@ -454,7 +456,7 @@ namespace gameboy::emulator
                     ADD("ADD HL, SP",  0x39, 2, SP)
 #undef ADD
                     ST("ADD SP, n",  0xE8, 4,
-                            const signed char n = rb(PC++);
+                            const auto        n = (signed char) rb(PC++);
                             const unsigned temp = SP + n; SP = temp;
                             cpu.set_flags((temp >> 16) << SC | (((SP & 0xFFF) + n) >> 12) << SH)
                     )
@@ -482,15 +484,20 @@ namespace gameboy::emulator
         {
             static unsigned exec(CPU& cpu, const MMU&) noexcept
             {
-                std::clog << opcode << std::endl;
+                // std::clog << opcode << std::endl;
 
-                [[maybe_unused]] auto& A = cpu.regs.AF.A;
+                [[maybe_unused]] auto& A = cpu.regs.AF.A, &C = cpu.regs.BC.C;
 
                 unsigned cycles = 0;
 
 #define ST(mnemonic, id, init_cycles, code)       \
-                if constexpr(opcode == id) {cycles = init_cycles; code;std::clog<<#mnemonic<<std::endl;} else
+                if constexpr(opcode == id) {cycles = init_cycles; code;/*std::clog<<#mnemonic<<std::endl;*/} else
+                    ST("RLC B",     0x00, 2, )
                     ST("SWAP A",      0x37, 2, A = A >> 4 | (A & 0xF) << 4; cpu.set_flags(!A << SZ))
+                    ST("SLA A",       0x27, 2,
+                            const bool carry = A & 0x80; A = A << 1; cpu.set_flags(!A << SZ | carry << SC))
+                    ST("SRL C",       0x39, 2,
+                            const bool carry = C & 1; C = C >> 1; cpu.set_flags(!C << SZ | carry << SC))
                     ST("RES 0, A",    0x87, 2, A = A & ~1) {}
 #undef ST
                 assert(cycles);

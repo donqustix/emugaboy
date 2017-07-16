@@ -21,12 +21,13 @@ void MMU::write_byte(unsigned address, unsigned value) const noexcept
         {
             case 0xFF0F: mem_pointers.cpu->IF = value;                  break;
             case 0xFF40: mem_pointers.gpu->write_lcd_control(value);    break;
-            case 0xFF41: mem_pointers.gpu->stat = value;                break;
+            case 0xFF41: mem_pointers.gpu->write_lcd_stat(value);       break;
             case 0xFF42: mem_pointers.gpu->scy = value;                 break;
             case 0xFF43: mem_pointers.gpu->scx = value;                 break;
             case 0xFF44: mem_pointers.gpu->ly = 0;                      break;
             case 0xFF45: mem_pointers.gpu->lyc = value;                 break;
             case 0xFF46: mem_pointers.dma->enable_transfer(value);      break;
+            case 0xFF47: mem_pointers.gpu->bgp = value;                 break;
             case 0xFF4A: mem_pointers.gpu->wy = value;                  break;
             case 0xFF4B: mem_pointers.gpu->wx = value;                  break;
         }
@@ -43,7 +44,7 @@ void MMU::write_word(unsigned address, unsigned value) const noexcept
 unsigned MMU::read_byte(unsigned address) const noexcept
 {
          if (address < 0x8000) return mem_pointers.cartridge->read_rom(address);
-    else if (address < 0xA000) return mem_pointers.cartridge->read_ram(address - 0x8000);
+    else if (address < 0xA000) return mem_pointers.gpu->vram[address - 0x8000];
     else if (address < 0xC000) return mem_pointers.cartridge->read_ram(address - 0xA000);
     else if (address < 0xE000) return mem_pointers.wram[address - 0xC000];
     else if (address < 0xFE00) return mem_pointers.wram[address - 0xE000];
@@ -59,10 +60,11 @@ unsigned MMU::read_byte(unsigned address) const noexcept
             case 0xFF43: return mem_pointers.gpu->scx;
             case 0xFF44: return mem_pointers.gpu->ly;
             case 0xFF45: return mem_pointers.gpu->lyc;
+            case 0xFF47: return mem_pointers.gpu->bgp;
             case 0xFF4A: return mem_pointers.gpu->wy;
             case 0xFF4B: return mem_pointers.gpu->wx;
             default:
-                return 0;
+                return 0xFF;
         }
     else if (address < 0xFFFF) return mem_pointers.hram[address - 0xFF80];
     else return mem_pointers.cpu->IE;
