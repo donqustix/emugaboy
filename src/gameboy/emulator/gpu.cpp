@@ -22,8 +22,8 @@ void GPU::scanline() noexcept
             framebuffer[(i + ly * 160) / 8 * 2] &= ~((px << 6) >> i % 8 * 2);
             framebuffer[(i + ly * 160) / 8 * 2] |=   (px << 6) >> i % 8 * 2;
 
-            framebuffer[(i + ly * 160) / 8 * 2 + 1] &= ~((px << 14) >> (i % 8 * 2));
-            framebuffer[(i + ly * 160) / 8 * 2 + 1] |=   (px << 14) >> (i % 8 * 2);
+            framebuffer[(i + ly * 160) / 8 * 2 + 1] &= ~(px << (7 - i % 8) * 2);
+            framebuffer[(i + ly * 160) / 8 * 2 + 1] |=   px << (7 - i % 8) * 2;
         }
     }
 }

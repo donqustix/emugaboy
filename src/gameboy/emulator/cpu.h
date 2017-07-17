@@ -62,6 +62,12 @@ namespace gameboy::emulator
         bool get_flag(FlagMasks flag) const noexcept {return regs.AF.F & flag;}
         void set_flags(unsigned flags, unsigned mask = 0xF0) noexcept {regs.AF.F = (regs.AF.F & ~mask) | flags;}
 
+        static void wb(const MMU& mmu, unsigned address, unsigned value) noexcept {mmu.write_byte(address, value);}
+        static void ww(const MMU& mmu, unsigned address, unsigned value) noexcept {mmu.write_word(address, value);}
+
+        static unsigned rb(const MMU& mmu, unsigned address) noexcept {return mmu.read_byte(address);}
+        static unsigned rw(const MMU& mmu, unsigned address) noexcept {return mmu.read_word(address);}
+
         template<bool prefix/*CB*/, unsigned opcode>
         struct ExecuteInstruction;
 
@@ -75,14 +81,10 @@ namespace gameboy::emulator
                 std::clog << "PC = " << cpu.regs.PC << std::endl;
                 std::clog << std::endl;
                 std::clog << "opcode = " << std::hex << opcode << std::endl;*/
-                [[maybe_unused]]
-                auto rb = [&mmu](unsigned index) noexcept {return mmu.read_byte(index);};
-                [[maybe_unused]]
-                auto rw = [&mmu](unsigned index) noexcept {return mmu.read_word(index);};
-                [[maybe_unused]]
-                auto wb = [&mmu](unsigned index, unsigned value) noexcept {mmu.write_byte(index, value);};
-                [[maybe_unused]]
-                auto ww = [&mmu](unsigned index, unsigned value) noexcept {mmu.write_word(index, value);};
+                [[maybe_unused]] auto rb = [&mmu](unsigned index) noexcept {return mmu.read_byte(index);};
+                [[maybe_unused]] auto rw = [&mmu](unsigned index) noexcept {return mmu.read_word(index);};
+                [[maybe_unused]] auto wb = [&mmu](unsigned index, unsigned value) noexcept {mmu.write_byte(index, value);};
+                [[maybe_unused]] auto ww = [&mmu](unsigned index, unsigned value) noexcept {mmu.write_word(index, value);};
 
                 [[maybe_unused]]
                 auto &A = cpu.regs.AF.A, &B = cpu.regs.BC.B, &C = cpu.regs.BC.C, &D = cpu.regs.DE.D,
@@ -268,8 +270,10 @@ namespace gameboy::emulator
 
                     ST("JP nn",     0xC3, 4, PC = rw(PC))
 
-                    ST("CALL NZ, nn",     0xC4, 3, if (!cpu.get_flag(MZ)) {ww(SP -= 2, PC + 2); PC = rw(PC); cycles += 3;} else PC += 2)
-                    ST("CALL NC, nn",     0xD4, 3, if (!cpu.get_flag(MC)) {ww(SP -= 2, PC + 2); PC = rw(PC); cycles += 3;} else PC += 2)
+                    ST("CALL NZ, nn",     0xC4, 3,
+                            if (!cpu.get_flag(MZ)) {ww(SP -= 2, PC + 2); PC = rw(PC); cycles += 3;} else PC += 2)
+                    ST("CALL NC, nn",     0xD4, 3,
+                            if (!cpu.get_flag(MC)) {ww(SP -= 2, PC + 2); PC = rw(PC); cycles += 3;} else PC += 2)
 
                     ST("RST 00H",     0xC7, 4, ww(SP -= 2, PC); PC = 0x00)
                     ST("RST 10H",     0xD7, 4, ww(SP -= 2, PC); PC = 0x10)
@@ -287,8 +291,10 @@ namespace gameboy::emulator
                     ST("JP Z, nn",     0xCA, 3, if (cpu.get_flag(MZ)) {PC = rw(PC); ++cycles;} else PC += 2)
                     ST("JP C, nn",     0xDA, 3, if (cpu.get_flag(MC)) {PC = rw(PC); ++cycles;} else PC += 2)
 
-                    ST("CALL Z, nn",     0xCC, 3, if (cpu.get_flag(MZ)) {ww(SP -= 2, PC + 2); PC = rw(PC); cycles += 3;} else PC += 2)
-                    ST("CALL C, nn",     0xDC, 3, if (cpu.get_flag(MC)) {ww(SP -= 2, PC + 2); PC = rw(PC); cycles += 3;} else PC += 2)
+                    ST("CALL Z, nn",     0xCC, 3,
+                            if (cpu.get_flag(MZ)) {ww(SP -= 2, PC + 2); PC = rw(PC); cycles += 3;} else PC += 2)
+                    ST("CALL C, nn",     0xDC, 3,
+                            if (cpu.get_flag(MC)) {ww(SP -= 2, PC + 2); PC = rw(PC); cycles += 3;} else PC += 2)
 
                     ST("CALL nn",     0xCD, 6, ww(SP -= 2, PC + 2); PC = rw(PC))
 
@@ -482,22 +488,145 @@ namespace gameboy::emulator
         template<unsigned opcode>
         struct ExecuteInstruction<1, opcode>
         {
-            static unsigned exec(CPU& cpu, const MMU&) noexcept
+            static unsigned exec(CPU& cpu, const MMU& mmu) noexcept
             {
                 // std::clog << opcode << std::endl;
 
-                [[maybe_unused]] auto& A = cpu.regs.AF.A, &C = cpu.regs.BC.C;
+                [[maybe_unused]] auto rb = [&mmu](unsigned index) noexcept {return mmu.read_byte(index);};
+                [[maybe_unused]] auto rw = [&mmu](unsigned index) noexcept {return mmu.read_word(index);};
+                [[maybe_unused]] auto wb = [&mmu](unsigned index, unsigned value) noexcept {mmu.write_byte(index, value);};
+                [[maybe_unused]] auto ww = [&mmu](unsigned index, unsigned value) noexcept {mmu.write_word(index, value);};
+
+                [[maybe_unused]]
+                auto &A = cpu.regs.AF.A, &B = cpu.regs.BC.B, &C = cpu.regs.BC.C, &D = cpu.regs.DE.D,
+                     &E = cpu.regs.DE.E, &H = cpu.regs.HL.H, &L = cpu.regs.HL.L;
+
+                [[maybe_unused]] auto& HL = cpu.regs.HL;
 
                 unsigned cycles = 0;
 
 #define ST(mnemonic, id, init_cycles, code)       \
                 if constexpr(opcode == id) {cycles = init_cycles; code;/*std::clog<<#mnemonic<<std::endl;*/} else
-                    ST("RLC B",     0x00, 2, )
-                    ST("SWAP A",      0x37, 2, A = A >> 4 | (A & 0xF) << 4; cpu.set_flags(!A << SZ))
-                    ST("SLA A",       0x27, 2,
-                            const bool carry = A & 0x80; A = A << 1; cpu.set_flags(!A << SZ | carry << SC))
-                    ST("SRL C",       0x39, 2,
-                            const bool carry = C & 1; C = C >> 1; cpu.set_flags(!C << SZ | carry << SC))
+
+#define RLC(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,    \
+                            const unsigned seco = o;                                    \
+                            const bool carry = seco & 0x80;                             \
+                            const unsigned temp = carry | seco << 1; assign_method;     \
+                            cpu.set_flags(!temp << SZ | carry << SC))
+                    RLC("RLC A",        0x07, 2,     A,     A = temp)
+                    RLC("RLC B",        0x00, 2,     B,     B = temp)
+                    RLC("RLC C",        0x01, 2,     C,     C = temp)
+                    RLC("RLC D",        0x02, 2,     D,     D = temp)
+                    RLC("RLC E",        0x03, 2,     E,     E = temp)
+                    RLC("RLC H",        0x04, 2,     H,     H = temp)
+                    RLC("RLC L",        0x05, 2,     L,     L = temp)
+                    RLC("RLC (HL)",     0x06, 4, rb(HL), wb(HL, temp))
+#undef RLC
+
+#define RRC(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,        \
+                            const unsigned seco = o;                                        \
+                            const bool carry = seco & 1;                                    \
+                            const unsigned temp = seco >> 1 | carry << 7; assign_method;    \
+                            cpu.set_flags(!temp << SZ | carry << SC))
+                    RRC("RRC A",        0x0F, 2,     A,     A = temp)
+                    RRC("RRC B",        0x08, 2,     B,     B = temp)
+                    RRC("RRC C",        0x09, 2,     C,     C = temp)
+                    RRC("RRC D",        0x0A, 2,     D,     D = temp)
+                    RRC("RRC E",        0x0B, 2,     E,     E = temp)
+                    RRC("RRC H",        0x0C, 2,     H,     H = temp)
+                    RRC("RRC L",        0x0D, 2,     L,     L = temp)
+                    RRC("RRC (HL)",     0x0E, 4, rb(HL), wb(HL, temp))
+#undef RRC
+
+#define RL(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,                     \
+                            const unsigned seco = o;                                                    \
+                            const bool carry = seco & 0x80;                                             \
+                            const unsigned temp = seco << 1 | cpu.get_flag(MC); assign_method;          \
+                            cpu.set_flags(!temp << SZ | carry << SC))
+                    RL("RL A",        0x17, 2,     A,     A = temp)
+                    RL("RL B",        0x10, 2,     B,     B = temp)
+                    RL("RL C",        0x11, 2,     C,     C = temp)
+                    RL("RL D",        0x12, 2,     D,     D = temp)
+                    RL("RL E",        0x13, 2,     E,     E = temp)
+                    RL("RL H",        0x14, 2,     H,     H = temp)
+                    RL("RL L",        0x15, 2,     L,     L = temp)
+                    RL("RL (HL)",     0x16, 4, rb(HL), wb(HL, temp))
+#undef RL
+
+#define RR(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,                     \
+                            const unsigned seco = o;                                                    \
+                            const bool carry = seco & 1;                                                \
+                            const unsigned temp = seco >> 1 | cpu.get_flag(MC) << 7; assign_method;     \
+                            cpu.set_flags(!temp << SZ | carry << SC))
+                    RR("RR A",        0x1F, 2,     A,     A = temp)
+                    RR("RR B",        0x18, 2,     B,     B = temp)
+                    RR("RR C",        0x19, 2,     C,     C = temp)
+                    RR("RR D",        0x1A, 2,     D,     D = temp)
+                    RR("RR E",        0x1B, 2,     E,     E = temp)
+                    RR("RR H",        0x1C, 2,     H,     H = temp)
+                    RR("RR L",        0x1D, 2,     L,     L = temp)
+                    RR("RR (HL)",     0x1E, 4, rb(HL), wb(HL, temp))
+#undef RR
+
+#define SLA(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,    \
+                            const unsigned seco = o;                                    \
+                            const bool carry = seco & 0x80;                             \
+                            const unsigned temp = seco << 1; assign_method;             \
+                            cpu.set_flags(!temp << SZ | carry << SC))
+                    SLA("SLA A",        0x27, 2,     A,     A = temp)
+                    SLA("SLA B",        0x20, 2,     B,     B = temp)
+                    SLA("SLA C",        0x21, 2,     C,     C = temp)
+                    SLA("SLA D",        0x22, 2,     D,     D = temp)
+                    SLA("SLA E",        0x23, 2,     E,     E = temp)
+                    SLA("SLA H",        0x24, 2,     H,     H = temp)
+                    SLA("SLA L",        0x25, 2,     L,     L = temp)
+                    SLA("SLA (HL)",     0x26, 4, rb(HL), wb(HL, temp))
+#undef SLA
+
+#define SRA(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,                    \
+                            const unsigned seco = o;                                                    \
+                            const bool carry = seco & 1;                                                \
+                            const unsigned temp = seco >> 1 | (seco & 0x80); assign_method;             \
+                            cpu.set_flags(!temp << SZ | carry << SC))
+                    SRA("SRA A",        0x2F, 2,     A,     A = temp)
+                    SRA("SRA B",        0x28, 2,     B,     B = temp)
+                    SRA("SRA C",        0x29, 2,     C,     C = temp)
+                    SRA("SRA D",        0x2A, 2,     D,     D = temp)
+                    SRA("SRA E",        0x2B, 2,     E,     E = temp)
+                    SRA("SRA H",        0x2C, 2,     H,     H = temp)
+                    SRA("SRA L",        0x2D, 2,     L,     L = temp)
+                    SRA("SRA (HL)",     0x2E, 4, rb(HL), wb(HL, temp))
+#undef SRA
+
+#define SRL(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,    \
+                            const unsigned seco = o;                                    \
+                            const bool carry = seco & 1;                                \
+                            const unsigned temp = seco >> 1; assign_method;             \
+                            cpu.set_flags(!temp << SZ | carry << SC))
+                    SRL("SRL A",        0x3F, 2,     A,     A = temp)
+                    SRL("SRL B",        0x38, 2,     B,     B = temp)
+                    SRL("SRL C",        0x39, 2,     C,     C = temp)
+                    SRL("SRL D",        0x3A, 2,     D,     D = temp)
+                    SRL("SRL E",        0x3B, 2,     E,     E = temp)
+                    SRL("SRL H",        0x3C, 2,     H,     H = temp)
+                    SRL("SRL L",        0x3D, 2,     L,     L = temp)
+                    SRL("SRL (HL)",     0x3E, 4, rb(HL), wb(HL, temp))
+#undef SRL
+
+#define SWAP(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,   \
+                            const unsigned seco = o;                                    \
+                            const unsigned temp = seco >> 4 | (seco & 0xF) << 4;        \
+                            cpu.set_flags(!temp << SZ))
+                    SWAP("SWAP A",        0x37, 2,     A,     A = temp)
+                    SWAP("SWAP B",        0x30, 2,     B,     B = temp)
+                    SWAP("SWAP C",        0x31, 2,     C,     C = temp)
+                    SWAP("SWAP D",        0x32, 2,     D,     D = temp)
+                    SWAP("SWAP E",        0x33, 2,     E,     E = temp)
+                    SWAP("SWAP H",        0x34, 2,     H,     H = temp)
+                    SWAP("SWAP L",        0x35, 2,     L,     L = temp)
+                    SWAP("SWAP (HL)",     0x36, 4, rb(HL), wb(HL, temp))
+#undef SWAP
+
                     ST("RES 0, A",    0x87, 2, A = A & ~1) {}
 #undef ST
                 assert(cycles);

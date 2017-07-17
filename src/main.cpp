@@ -42,46 +42,32 @@ int main()
         previous_time = current_time;
 
         while (::SDL_PollEvent(&event))
-        {
             if (event.type == SDL_QUIT) running = false;
-            else if (event.type == SDL_KEYDOWN)
-            {
-                if (event.key.keysym.scancode == SDL_SCANCODE_D)
-                {
-                    for (unsigned i = 0; i < insts_per_update; ++i)
-                    {
-                        const unsigned cycles = cpu.next_step(mmu);
-                        dma.tick(cycles);
-                        const unsigned interrupts = gpu.tick(cycles);
-                        cpu.request_interrupts(interrupts);
-                    }
-                }
-            }
-        }
 
         for (; acc_update_time >= seconds_per_update; acc_update_time -= seconds_per_update)
         {
+            for (unsigned i = 0; i < insts_per_update; ++i)
+            {
+                const unsigned cycles = cpu.next_step(mmu);
+                dma.tick(cycles);
+                const unsigned interrupts = gpu.tick(cycles);
+                cpu.request_interrupts(interrupts);
+            }
         }
         Uint32* pixels;
         int pitch;
 
         ::SDL_LockTexture(texture, nullptr, reinterpret_cast<void**>(&pixels), &pitch);
+
         const unsigned char* const framebuffer = gpu.get_framebuffer();
-        for (int i = 0; i < 144; ++i)
-        {
-            for (int j = 0; j < 160; ++j)
-            {
-                // 11 11 11 11 , 11 11 11 11
-                const unsigned px = (framebuffer[(j + i * 160) / 4] >> (6 - j % 4 * 2) & 3);
-                pixels[j + i * 160] = 0xFF000000 | (0x00FFFFFF * ((3 - px) / 3));
-            }
-        }
+        for (int i = 0; i < 160 * 144; ++i)
+            pixels[i] = 0xFF000000 | (0x00FFFFFF * ((3 - (framebuffer[i / 4] >> (6 - i % 4 * 2) & 3)) / 3));
+
         ::SDL_UnlockTexture(texture);
 
         ::SDL_RenderClear(renderer);
         ::SDL_RenderCopy(renderer, texture, nullptr, nullptr);
         ::SDL_RenderPresent(renderer);
-        ::SDL_Delay(5);
     }
     ::SDL_DestroyTexture(texture);
     ::SDL_DestroyRenderer(renderer);
