@@ -1,5 +1,7 @@
 #include "gpu.h"
 
+#include <iostream>
+
 using gameboy::emulator::GPU;
 
 void GPU::scanline() noexcept

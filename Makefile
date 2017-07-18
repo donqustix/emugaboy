@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++1z -pedantic -Wall -Wextra -Isrc
+CXXFLAGS = -std=c++1z -pedantic -Wall -Wextra -O2 -Isrc
 LDFLAGS = -lSDL2
 
 PROJECT_NAME = emulator
