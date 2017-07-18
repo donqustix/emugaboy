@@ -63,7 +63,10 @@ int main()
 
         const unsigned char* const framebuffer = gpu.get_framebuffer();
         for (int i = 0; i < 160 * 144; ++i)
-            pixels[i] = 0xFF000000 | (0x00FFFFFF * ((3 - (framebuffer[i / 4] >> (6 - i % 4 * 2) & 3)) / 3));
+        {
+            const unsigned px = 0xFF * (3 - (framebuffer[i / 4] >> (6 - i % 4 * 2) & 3)) / 3;
+            pixels[i] = 0xFF000000 | px | px << 8 | px << 16;
+        }
 
         ::SDL_UnlockTexture(texture);
 
