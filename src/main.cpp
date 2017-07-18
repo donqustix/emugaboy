@@ -26,11 +26,11 @@ int main()
     mmu.set_mem_pointers(mem_pointers);
 
     ::SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
-    SDL_Window* const window = ::SDL_CreateWindow("Uncomplicated Gameboy", 0, 0, 320, 240, SDL_WINDOW_RESIZABLE);
+    SDL_Window* const window = ::SDL_CreateWindow("Uncomplicated Gameboy",
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, SDL_WINDOW_RESIZABLE);
     SDL_Renderer* const renderer = ::SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_Texture* const texture = ::SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
             SDL_TEXTUREACCESS_STREAMING, 160, 144);
-    SDL_Event event;
     const unsigned seconds_per_update = 1000 / 60, insts_per_update = 1048576 / 60;
     unsigned acc_update_time = 0;
     Uint32 previous_time = ::SDL_GetTicks();
@@ -41,18 +41,20 @@ int main()
 
         previous_time = current_time;
 
-        while (::SDL_PollEvent(&event))
+        for (static SDL_Event event; ::SDL_PollEvent(&event);)
             if (event.type == SDL_QUIT) running = false;
 
         for (; acc_update_time >= seconds_per_update; acc_update_time -= seconds_per_update)
         {
-            for (unsigned i = 0; i < insts_per_update;)
+            static unsigned i = 0;
+            while (i < insts_per_update)
             {
-                const unsigned cycles = cpu.next_step(mmu);
-                dma.tick(cycles); i += cycles;
+                const unsigned cycles = cpu.next_step(mmu); i += cycles;
+                dma.tick(cycles);
                 const unsigned interrupts = gpu.tick(cycles);
                 cpu.request_interrupts(interrupts);
             }
+            i -= insts_per_update;
         }
         Uint32* pixels;
         int pitch;

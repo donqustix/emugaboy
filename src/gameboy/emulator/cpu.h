@@ -3,7 +3,6 @@
 
 #include "mmu.h"
 
-#include <iostream>
 #include <cassert>
 
 namespace gameboy::emulator
@@ -49,7 +48,7 @@ namespace gameboy::emulator
 
     private:
         unsigned char IE = 0;
-        unsigned char IF;
+        unsigned char IF = 0;
         bool interrupt_master_enable;
 
         enum FlagMasks {
@@ -71,10 +70,6 @@ namespace gameboy::emulator
             // return a result of the opcode execution
             static unsigned exec(CPU& cpu, const MMU& mmu) noexcept
             {
-                /*
-                std::clog << "PC = " << cpu.regs.PC << std::endl;
-                std::clog << std::endl;
-                std::clog << "opcode = " << std::hex << opcode << std::endl;*/
                 [[maybe_unused]] auto rb = [&mmu](unsigned index) noexcept {return mmu.read_byte(index);};
                 [[maybe_unused]] auto rw = [&mmu](unsigned index) noexcept {return mmu.read_word(index);};
                 [[maybe_unused]] auto wb = [&mmu](unsigned index, unsigned value) noexcept {mmu.write_byte(index, value);};
@@ -91,22 +86,10 @@ namespace gameboy::emulator
                 [[maybe_unused]] auto& PC = cpu.regs.PC;
                 [[maybe_unused]] auto& SP = cpu.regs.SP;
 
-                /*
-                std::clog << "AF = " << AF << std::endl;
-                std::clog << "BC = " << BC << std::endl;
-                std::clog << "DE = " << DE << std::endl;
-                std::clog << "HL = " << HL << std::endl;
-                std::clog << "SP = " << SP << std::endl;
-                std::clog << "PC = " << PC << std::endl;
-                std::clog << "FZ = " << cpu.get_flag(MZ) << std::endl;
-                std::clog << "FN = " << cpu.get_flag(MN) << std::endl;
-                std::clog << "FH = " << cpu.get_flag(MH) << std::endl;
-                std::clog << "FC = " << cpu.get_flag(MC) << std::endl;*/
-
                 unsigned cycles = 0;
 
 #define ST(mnemonic, id, init_cycles, code)       \
-                if constexpr(opcode == id) {cycles = init_cycles; code;/*std::clog<<#mnemonic<<std::endl;*/} else
+                if constexpr(opcode == id) {cycles = init_cycles; code;} else
                     // misc/control instructions
                     ST("NOP",      0x00, 1, )
                     ST("STOP",     0x10, 0, ) // !!!
@@ -484,8 +467,6 @@ namespace gameboy::emulator
         {
             static unsigned exec(CPU& cpu, const MMU& mmu) noexcept
             {
-                // std::clog << opcode << std::endl;
-
                 [[maybe_unused]] auto rb = [&mmu](unsigned index) noexcept {return mmu.read_byte(index);};
                 [[maybe_unused]] auto rw = [&mmu](unsigned index) noexcept {return mmu.read_word(index);};
                 [[maybe_unused]] auto wb = [&mmu](unsigned index, unsigned value) noexcept {mmu.write_byte(index, value);};
@@ -500,7 +481,7 @@ namespace gameboy::emulator
                 unsigned cycles = 0;
 
 #define ST(mnemonic, id, init_cycles, code)       \
-                if constexpr(opcode == id) {cycles = init_cycles; code;/*std::clog<<#mnemonic<<std::endl;*/} else
+                if constexpr(opcode == id) {cycles = init_cycles; code;} else
 
 #define RLC(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,    \
                             const unsigned seco = o;                                    \

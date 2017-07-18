@@ -1,8 +1,6 @@
 #ifndef GPU_H
 #define GPU_H
 
-#include <iostream>
-
 namespace gameboy::emulator
 {
     class GPU
@@ -50,7 +48,7 @@ namespace gameboy::emulator
     public:
         void write_oam(unsigned index, unsigned value) noexcept {oam[index] = value;}
         void write_lcd_control(unsigned value) noexcept;
-        void write_lcd_stat(unsigned value) noexcept {std::clog<<"awd "<<value<<std::endl;stat &= 7; stat |= value & ~7;}
+        void write_lcd_stat(unsigned value) noexcept {stat &= 7; stat |= value & ~7;}
         unsigned tick(unsigned cycles) noexcept;
         const unsigned char* get_framebuffer() const noexcept {return framebuffer;}
     };

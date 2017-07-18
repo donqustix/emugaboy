@@ -1,7 +1,5 @@
 #include "gpu.h"
 
-#include <iostream>
-
 using gameboy::emulator::GPU;
 
 void GPU::scanline() noexcept
@@ -30,7 +28,6 @@ void GPU::scanline() noexcept
 
 void GPU::write_lcd_control(unsigned value) noexcept
 {
-    std::clog << value << std::endl;
     if ((control = value) & CONTROL_MASK_LCD_DISPLAY_ENABLE) {
         stat = (stat & ~STAT_MASK_MODE_FLAG) | STAT_MODE_READ_OAM;   mode_clock = 0;
     }
