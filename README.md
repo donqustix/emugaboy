@@ -1,1 +1,1 @@
-# gameboy-emulator
+# emugaboy
