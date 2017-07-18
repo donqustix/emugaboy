@@ -62,12 +62,6 @@ namespace gameboy::emulator
         bool get_flag(FlagMasks flag) const noexcept {return regs.AF.F & flag;}
         void set_flags(unsigned flags, unsigned mask = 0xF0) noexcept {regs.AF.F = (regs.AF.F & ~mask) | flags;}
 
-        static void wb(const MMU& mmu, unsigned address, unsigned value) noexcept {mmu.write_byte(address, value);}
-        static void ww(const MMU& mmu, unsigned address, unsigned value) noexcept {mmu.write_word(address, value);}
-
-        static unsigned rb(const MMU& mmu, unsigned address) noexcept {return mmu.read_byte(address);}
-        static unsigned rw(const MMU& mmu, unsigned address) noexcept {return mmu.read_word(address);}
-
         template<bool prefix/*CB*/, unsigned opcode>
         struct ExecuteInstruction;
 
@@ -447,8 +441,8 @@ namespace gameboy::emulator
 #undef DEC
 
                     ST("CPL",  0x2F, 1, A = A ^ 0xFF; cpu.set_flags(MN | MH, MN | MH))
-                    ST("CCF",  0x3F, 1,               cpu.set_flags(cpu.regs.AF.F ^ MC, ~MZ))
-                    ST("SCF",  0x37, 1,               cpu.set_flags(                MC, ~MZ))
+                    ST("CCF",  0x3F, 1,               cpu.set_flags((cpu.regs.AF.F ^ MC) & MC, ~MZ))
+                    ST("SCF",  0x37, 1,               cpu.set_flags(                       MC, ~MZ))
                     ST("DDA",  0x27, 0, ) // !!!
 
                     // 16bit arithmetic/logical instructions
@@ -512,7 +506,7 @@ namespace gameboy::emulator
                             const unsigned seco = o;                                    \
                             const bool carry = seco & 0x80;                             \
                             const unsigned temp = carry | seco << 1; assign_method;     \
-                            cpu.set_flags(!temp << SZ | carry << SC))
+                            cpu.set_flags(!(temp & 0xFF) << SZ | carry << SC))
                     RLC("RLC A",        0x07, 2,     A,     A = temp)
                     RLC("RLC B",        0x00, 2,     B,     B = temp)
                     RLC("RLC C",        0x01, 2,     C,     C = temp)
@@ -542,7 +536,7 @@ namespace gameboy::emulator
                             const unsigned seco = o;                                                    \
                             const bool carry = seco & 0x80;                                             \
                             const unsigned temp = seco << 1 | cpu.get_flag(MC); assign_method;          \
-                            cpu.set_flags(!temp << SZ | carry << SC))
+                            cpu.set_flags(!(temp & 0xFF) << SZ | carry << SC))
                     RL("RL A",        0x17, 2,     A,     A = temp)
                     RL("RL B",        0x10, 2,     B,     B = temp)
                     RL("RL C",        0x11, 2,     C,     C = temp)
@@ -572,7 +566,7 @@ namespace gameboy::emulator
                             const unsigned seco = o;                                    \
                             const bool carry = seco & 0x80;                             \
                             const unsigned temp = seco << 1; assign_method;             \
-                            cpu.set_flags(!temp << SZ | carry << SC))
+                            cpu.set_flags(!(temp & 0xFF) << SZ | carry << SC))
                     SLA("SLA A",        0x27, 2,     A,     A = temp)
                     SLA("SLA B",        0x20, 2,     B,     B = temp)
                     SLA("SLA C",        0x21, 2,     C,     C = temp)
@@ -626,6 +620,86 @@ namespace gameboy::emulator
                     SWAP("SWAP L",        0x35, 2,     L,     L = temp)
                     SWAP("SWAP (HL)",     0x36, 4, rb(HL), wb(HL, temp))
 #undef SWAP
+
+                    ST("BIT 0, A",     0x47, 2, cpu.set_flags(!(A & 0x01) << SZ | MH, ~MC))
+                    ST("BIT 2, A",     0x57, 2, cpu.set_flags(!(A & 0x04) << SZ | MH, ~MC))
+                    ST("BIT 4, A",     0x67, 2, cpu.set_flags(!(A & 0x10) << SZ | MH, ~MC))
+                    ST("BIT 6, A",     0x77, 2, cpu.set_flags(!(A & 0x40) << SZ | MH, ~MC))
+
+                    ST("BIT 0, B",     0x40, 2, cpu.set_flags(!(B & 0x01) << SZ | MH, ~MC))
+                    ST("BIT 2, B",     0x50, 2, cpu.set_flags(!(B & 0x04) << SZ | MH, ~MC))
+                    ST("BIT 4, B",     0x60, 2, cpu.set_flags(!(B & 0x10) << SZ | MH, ~MC))
+                    ST("BIT 6, B",     0x70, 2, cpu.set_flags(!(B & 0x40) << SZ | MH, ~MC))
+
+                    ST("BIT 0, C",     0x41, 2, cpu.set_flags(!(C & 0x01) << SZ | MH, ~MC))
+                    ST("BIT 2, C",     0x51, 2, cpu.set_flags(!(C & 0x04) << SZ | MH, ~MC))
+                    ST("BIT 4, C",     0x61, 2, cpu.set_flags(!(C & 0x10) << SZ | MH, ~MC))
+                    ST("BIT 6, C",     0x71, 2, cpu.set_flags(!(C & 0x40) << SZ | MH, ~MC))
+
+                    ST("BIT 0, D",     0x42, 2, cpu.set_flags(!(D & 0x01) << SZ | MH, ~MC))
+                    ST("BIT 2, D",     0x52, 2, cpu.set_flags(!(D & 0x04) << SZ | MH, ~MC))
+                    ST("BIT 4, D",     0x62, 2, cpu.set_flags(!(D & 0x10) << SZ | MH, ~MC))
+                    ST("BIT 6, D",     0x72, 2, cpu.set_flags(!(D & 0x40) << SZ | MH, ~MC))
+
+                    ST("BIT 0, E",     0x43, 2, cpu.set_flags(!(E & 0x01) << SZ | MH, ~MC))
+                    ST("BIT 2, E",     0x53, 2, cpu.set_flags(!(E & 0x04) << SZ | MH, ~MC))
+                    ST("BIT 4, E",     0x63, 2, cpu.set_flags(!(E & 0x10) << SZ | MH, ~MC))
+                    ST("BIT 6, E",     0x73, 2, cpu.set_flags(!(E & 0x40) << SZ | MH, ~MC))
+
+                    ST("BIT 0, H",     0x44, 2, cpu.set_flags(!(H & 0x01) << SZ | MH, ~MC))
+                    ST("BIT 2, H",     0x54, 2, cpu.set_flags(!(H & 0x04) << SZ | MH, ~MC))
+                    ST("BIT 4, H",     0x64, 2, cpu.set_flags(!(H & 0x10) << SZ | MH, ~MC))
+                    ST("BIT 6, H",     0x74, 2, cpu.set_flags(!(H & 0x40) << SZ | MH, ~MC))
+
+                    ST("BIT 0, L",     0x45, 2, cpu.set_flags(!(L & 0x01) << SZ | MH, ~MC))
+                    ST("BIT 2, L",     0x55, 2, cpu.set_flags(!(L & 0x04) << SZ | MH, ~MC))
+                    ST("BIT 4, L",     0x65, 2, cpu.set_flags(!(L & 0x10) << SZ | MH, ~MC))
+                    ST("BIT 6, L",     0x75, 2, cpu.set_flags(!(L & 0x40) << SZ | MH, ~MC))
+
+                    ST("BIT 0, (HL)",     0x46, 4, cpu.set_flags(!(rb(HL) & 0x01) << SZ | MH, ~MC))
+                    ST("BIT 2, (HL)",     0x56, 4, cpu.set_flags(!(rb(HL) & 0x04) << SZ | MH, ~MC))
+                    ST("BIT 4, (HL)",     0x66, 4, cpu.set_flags(!(rb(HL) & 0x10) << SZ | MH, ~MC))
+                    ST("BIT 6, (HL)",     0x76, 4, cpu.set_flags(!(rb(HL) & 0x40) << SZ | MH, ~MC))
+
+                    ST("BIT 1, A",     0x4F, 2, cpu.set_flags(!(A & 0x02) << SZ | MH, ~MC))
+                    ST("BIT 3, A",     0x5F, 2, cpu.set_flags(!(A & 0x08) << SZ | MH, ~MC))
+                    ST("BIT 5, A",     0x6F, 2, cpu.set_flags(!(A & 0x20) << SZ | MH, ~MC))
+                    ST("BIT 7, A",     0x7F, 2, cpu.set_flags(!(A & 0x80) << SZ | MH, ~MC))
+
+                    ST("BIT 1, B",     0x48, 2, cpu.set_flags(!(B & 0x02) << SZ | MH, ~MC))
+                    ST("BIT 3, B",     0x58, 2, cpu.set_flags(!(B & 0x08) << SZ | MH, ~MC))
+                    ST("BIT 5, B",     0x68, 2, cpu.set_flags(!(B & 0x20) << SZ | MH, ~MC))
+                    ST("BIT 7, B",     0x78, 2, cpu.set_flags(!(B & 0x80) << SZ | MH, ~MC))
+
+                    ST("BIT 1, C",     0x49, 2, cpu.set_flags(!(C & 0x02) << SZ | MH, ~MC))
+                    ST("BIT 3, C",     0x59, 2, cpu.set_flags(!(C & 0x08) << SZ | MH, ~MC))
+                    ST("BIT 5, C",     0x69, 2, cpu.set_flags(!(C & 0x20) << SZ | MH, ~MC))
+                    ST("BIT 7, C",     0x79, 2, cpu.set_flags(!(C & 0x80) << SZ | MH, ~MC))
+
+                    ST("BIT 1, D",     0x4A, 2, cpu.set_flags(!(D & 0x02) << SZ | MH, ~MC))
+                    ST("BIT 3, D",     0x5A, 2, cpu.set_flags(!(D & 0x08) << SZ | MH, ~MC))
+                    ST("BIT 5, D",     0x6A, 2, cpu.set_flags(!(D & 0x20) << SZ | MH, ~MC))
+                    ST("BIT 7, D",     0x7A, 2, cpu.set_flags(!(D & 0x80) << SZ | MH, ~MC))
+
+                    ST("BIT 1, E",     0x4B, 2, cpu.set_flags(!(E & 0x02) << SZ | MH, ~MC))
+                    ST("BIT 3, E",     0x5B, 2, cpu.set_flags(!(E & 0x08) << SZ | MH, ~MC))
+                    ST("BIT 5, E",     0x6B, 2, cpu.set_flags(!(E & 0x20) << SZ | MH, ~MC))
+                    ST("BIT 7, E",     0x7B, 2, cpu.set_flags(!(E & 0x80) << SZ | MH, ~MC))
+
+                    ST("BIT 1, H",     0x4C, 2, cpu.set_flags(!(H & 0x02) << SZ | MH, ~MC))
+                    ST("BIT 3, H",     0x5C, 2, cpu.set_flags(!(H & 0x08) << SZ | MH, ~MC))
+                    ST("BIT 5, H",     0x6C, 2, cpu.set_flags(!(H & 0x20) << SZ | MH, ~MC))
+                    ST("BIT 7, H",     0x7C, 2, cpu.set_flags(!(H & 0x80) << SZ | MH, ~MC))
+
+                    ST("BIT 1, L",     0x4D, 2, cpu.set_flags(!(L & 0x02) << SZ | MH, ~MC))
+                    ST("BIT 3, L",     0x5D, 2, cpu.set_flags(!(L & 0x08) << SZ | MH, ~MC))
+                    ST("BIT 5, L",     0x6D, 2, cpu.set_flags(!(L & 0x20) << SZ | MH, ~MC))
+                    ST("BIT 7, L",     0x7D, 2, cpu.set_flags(!(L & 0x80) << SZ | MH, ~MC))
+
+                    ST("BIT 1, (HL)",     0x4E, 4, cpu.set_flags(!(rb(HL) & 0x02) << SZ | MH, ~MC))
+                    ST("BIT 3, (HL)",     0x5E, 4, cpu.set_flags(!(rb(HL) & 0x08) << SZ | MH, ~MC))
+                    ST("BIT 5, (HL)",     0x6E, 4, cpu.set_flags(!(rb(HL) & 0x20) << SZ | MH, ~MC))
+                    ST("BIT 7, (HL)",     0x7E, 4, cpu.set_flags(!(rb(HL) & 0x80) << SZ | MH, ~MC))
 
                     ST("RES 0, A",    0x87, 2, A = A & ~1) {}
 #undef ST

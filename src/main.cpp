@@ -46,10 +46,10 @@ int main()
 
         for (; acc_update_time >= seconds_per_update; acc_update_time -= seconds_per_update)
         {
-            for (unsigned i = 0; i < insts_per_update; ++i)
+            for (unsigned i = 0; i < insts_per_update;)
             {
                 const unsigned cycles = cpu.next_step(mmu);
-                dma.tick(cycles);
+                dma.tick(cycles); i += cycles;
                 const unsigned interrupts = gpu.tick(cycles);
                 cpu.request_interrupts(interrupts);
             }
@@ -73,37 +73,6 @@ int main()
     ::SDL_DestroyRenderer(renderer);
     ::SDL_DestroyWindow(window);
     ::SDL_Quit();
-/*
-    char c;
-    do
-    {
-        std::cin.get(c);
-        if (c == 'f')
-        {
-            for (int i = 0; i < 1500; ++i)
-                tick();
-        }
-        else if (c == 'd')
-        {
-            const unsigned char* const framebuffer = gpu.get_framebuffer();
-            for (int i = 0; i < 144; ++i)
-            {
-                for (int j = 0; j < 160; ++j)
-                {
-                    std::clog << unsigned((framebuffer[(j + i * 160) / 8 * 2] >> (6 - (j % 4) * 2)) & 3);
-                }
-                std::clog << std::endl;
-            }
-            std::clog << std::endl;
-            //for (int i = 0; i < 0x800; ++i)
-            //    std::clog << std::hex << 0x8000 + i << " = " << (int) gpu.vram[i] << std::endl;
-        }
-        else
-        {
-            tick();
-        }
-    }
-    while (c != 'e');*/
 
     return 0;
 }

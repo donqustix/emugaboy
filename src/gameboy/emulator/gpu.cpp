@@ -19,10 +19,10 @@ void GPU::scanline() noexcept
                 (vram[st + vm * 16 + (scy + ly) % 8 * 2    ] >> (7 - (scx + i) % 8) & 1) << 1 |
                 (vram[st + vm * 16 + (scy + ly) % 8 * 2 + 1] >> (7 - (scx + i) % 8) & 1);
 
-            framebuffer[(i + ly * 160) / 8 * 2] &= ~((px << 6) >> i % 8 * 2);
+            framebuffer[(i + ly * 160) / 8 * 2] &= ~(( 3 << 6) >> i % 8 * 2);
             framebuffer[(i + ly * 160) / 8 * 2] |=   (px << 6) >> i % 8 * 2;
 
-            framebuffer[(i + ly * 160) / 8 * 2 + 1] &= ~(px << (7 - i % 8) * 2);
+            framebuffer[(i + ly * 160) / 8 * 2 + 1] &= ~( 3 << (7 - i % 8) * 2);
             framebuffer[(i + ly * 160) / 8 * 2 + 1] |=   px << (7 - i % 8) * 2;
         }
     }
