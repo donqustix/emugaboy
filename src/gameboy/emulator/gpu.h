@@ -1,6 +1,8 @@
 #ifndef GPU_H
 #define GPU_H
 
+#include <vector>
+
 namespace gameboy::emulator
 {
     class GPU
@@ -42,11 +44,13 @@ namespace gameboy::emulator
                                   obp1 = 0xFF;
 
         unsigned char framebuffer[160 * 144 / 8 * 2];
+        
+        std::vector<int> sprite_oam_indices;
         unsigned mode_clock = 0;
 
         void scanline() noexcept;
     public:
-        void write_oam(unsigned index, unsigned value) noexcept {oam[index] = value;}
+        void write_oam(unsigned index, unsigned value) noexcept;
         void write_lcd_control(unsigned value) noexcept;
         void write_lcd_stat(unsigned value) noexcept {stat &= 7; stat |= value & ~7;}
         unsigned tick(unsigned cycles) noexcept;

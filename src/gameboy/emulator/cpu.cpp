@@ -22,7 +22,7 @@ unsigned CPU::next_step(const MMU& mmu) noexcept
         }
     }
     // build a table of opcodes
-    static constexpr unsigned (*insts[512])(CPU&, const MMU&) noexcept
+    static constexpr unsigned (*insts[512])(CPU& cpu, const MMU&) noexcept
     {
 #define a(p,n) ExecuteInstruction<p, n    >::exec,   \
                ExecuteInstruction<p, n + 1>::exec,

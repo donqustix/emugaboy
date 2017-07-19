@@ -1,7 +1,5 @@
 #include "gpu.h"
 
-#include <iostream>
-
 using gameboy::emulator::GPU;
 
 void GPU::scanline() noexcept
@@ -26,6 +24,21 @@ void GPU::scanline() noexcept
             framebuffer[(i + ly * 160) / 8 * 2 + 1] |=   px << (7 - i % 8) * 2;
         }
     }
+    /*
+    if (control & CONTROL_MASK_OBJ_DISPLAY_ENABLE)
+    {
+        for (int s_oam_index : sprite_oam_indices)
+        {
+            const unsigned char sx = oam[s_oam_index    ], sy = oam[s_oam_index + 1];
+            const unsigned char si = oam[s_oam_index + 2], sa = oam[s_oam_index + 3];
+
+        }
+    }*/
+}
+
+void GPU::write_oam(unsigned index, unsigned value) noexcept
+{
+    oam[index] = value;
 }
 
 void GPU::write_lcd_control(unsigned value) noexcept

@@ -27,11 +27,11 @@ int main()
 
     ::SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
     SDL_Window* const window = ::SDL_CreateWindow("Emugaboy",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_RESIZABLE);
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 3, 144 * 3, SDL_WINDOW_RESIZABLE);
     SDL_Renderer* const renderer = ::SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_Texture* const texture = ::SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
             SDL_TEXTUREACCESS_STREAMING, 160, 144);
-    const unsigned seconds_per_update = 1000 / 60, insts_per_update = 1048576 / 60;
+    constexpr unsigned seconds_per_update = 1000 / 60, insts_per_update = 1048576 / 60;
     unsigned acc_update_time = 0;
     Uint32 previous_time = ::SDL_GetTicks();
     for (bool running = true; running;)
