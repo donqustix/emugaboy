@@ -1,5 +1,7 @@
 #include "cpu.h"
 
+#include <iostream>
+
 using gameboy::emulator::CPU;
 
 unsigned CPU::next_step(const MMU& mmu) noexcept

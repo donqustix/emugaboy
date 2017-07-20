@@ -426,7 +426,7 @@ namespace gameboy::emulator
                     ST("CPL",  0x2F, 1, A = A ^ 0xFF; cpu.set_flags(MN | MH, MN | MH))
                     ST("CCF",  0x3F, 1,               cpu.set_flags((cpu.regs.AF.F ^ MC) & MC, ~MZ))
                     ST("SCF",  0x37, 1,               cpu.set_flags(                       MC, ~MZ))
-                    ST("DDA",  0x27, 0, ) // !!!
+                    ST("DDA",  0x27, 1, ) // !!!
 
                     // 16bit arithmetic/logical instructions
 #define ADD(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,       \
@@ -452,7 +452,17 @@ namespace gameboy::emulator
                     ST("DEC BC", 0x0B, 2, BC = BC - 1)
                     ST("DEC DE", 0x1B, 2, DE = DE - 1)
                     ST("DEC HL", 0x2B, 2, HL = HL - 1)
-                    ST("DEC SP", 0x3B, 2, SP = SP - 1) {}
+                    ST("DEC SP", 0x3B, 2, SP = SP - 1)
+
+                    ST("RRCA",     0x0F, 1,
+                            const bool carry = A &    1; A = A >> 1 | carry << 7; cpu.set_flags(carry << SZ))
+                    ST("RLCA",     0x07, 1,
+                            const bool carry = A & 0x80; A = A << 1 | carry;      cpu.set_flags(carry << SZ))
+
+                    ST("RRA",     0x1F, 1,
+                            const bool carry = A &    1; A = A >> 1 | cpu.get_flag(MC) << 7; cpu.set_flags(carry << SZ);)
+                    ST("RLA",     0x17, 1,
+                            const bool carry = A & 0x80; A = A << 1 | cpu.get_flag(MC);      cpu.set_flags(carry << SZ);) {}
 
 #undef ST
 
