@@ -27,7 +27,7 @@ int main()
 
     ::SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
     SDL_Window* const window = ::SDL_CreateWindow("Emugaboy",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160, 144, SDL_WINDOW_RESIZABLE);
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 2, 144 * 2, SDL_WINDOW_RESIZABLE);
     SDL_Renderer* const renderer = ::SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_Texture* const texture = ::SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
             SDL_TEXTUREACCESS_STREAMING, 160, 144);
@@ -61,10 +61,9 @@ int main()
 
         ::SDL_LockTexture(texture, nullptr, reinterpret_cast<void**>(&pixels), &pitch);
 
-        const unsigned char* const framebuffer = gpu.get_framebuffer();
         for (int i = 0; i < 160 * 144; ++i)
         {
-            const unsigned px = 0xFF * (3 - (framebuffer[i / 4] >> (6 - i % 4 * 2) & 3)) / 3;
+            const unsigned px = 0xFF * (3 - gpu.get_framebuffer_pixel(i)) / 3;
             pixels[i] = 0xFF000000 | px | px << 8 | px << 16;
         }
 

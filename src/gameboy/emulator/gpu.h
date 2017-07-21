@@ -47,6 +47,12 @@ namespace gameboy::emulator
         std::list<int> oam_indices;
         unsigned mode_clock = 0;
 
+        void set_framebuffer_pixel(int index, unsigned px) noexcept
+        {
+            framebuffer[index / 4] &= ~( 3 << (6 - index % 4 * 2));
+            framebuffer[index / 4] |=   px << (6 - index % 4 * 2);
+        }
+
         void draw_background() noexcept;
         void draw_sprites() noexcept;
         void scanline() noexcept;
@@ -55,7 +61,7 @@ namespace gameboy::emulator
         void write_lcd_control(unsigned value) noexcept;
         void write_lcd_stat(unsigned value) noexcept {stat &= 7; stat |= value & ~7;}
         unsigned tick(unsigned cycles) noexcept;
-        const unsigned char* get_framebuffer() const noexcept {return framebuffer;}
+        unsigned get_framebuffer_pixel(int index) const noexcept {return framebuffer[index / 4] >> (6 - index % 4 * 2) & 3;}
     };
 }
 

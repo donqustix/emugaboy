@@ -1,7 +1,6 @@
 #include "gpu.h"
 
 #include <algorithm>
-#include <cstdlib> // std::abs(int)
 
 using gameboy::emulator::GPU;
 
@@ -17,12 +16,7 @@ void GPU::draw_background() noexcept
         const unsigned px =
             (vram[st + vm * 16 + (scy + ly) % 8 * 2    ] >> (7 - (scx + i) % 8) & 1) << 1 |
             (vram[st + vm * 16 + (scy + ly) % 8 * 2 + 1] >> (7 - (scx + i) % 8) & 1);
-
-        framebuffer[(i + ly * 160) / 8 * 2    ] &= ~(( 3 << 6) >> i % 8 * 2);
-        framebuffer[(i + ly * 160) / 8 * 2    ] |=   (px << 6) >> i % 8 * 2;
-
-        framebuffer[(i + ly * 160) / 8 * 2 + 1] &= ~(  3 << (7 - i % 8) * 2);
-        framebuffer[(i + ly * 160) / 8 * 2 + 1] |=    px << (7 - i % 8) * 2;
+        set_framebuffer_pixel(i + ly * 160, px);
     }
 }
 
@@ -31,27 +25,25 @@ void GPU::draw_sprites() noexcept
     const int ss = control & CONTROL_MASK_OBJ_SIZE ? 16 : 8;
     for (int oam_index : oam_indices)
     {
-        const unsigned char sy = oam[oam_index] - 16;
+        const int sy = oam[oam_index] - 16;
         if (ly >= sy && ly < sy + ss)
         {
             const unsigned char si = ss == 16 ? oam[oam_index + 2] & 0xFE : oam[oam_index + 2];
             const unsigned char sa = oam[oam_index + 3];
             const bool sp = sa & 0x80, sfy = sa & 0x40, sfx = sa & 0x20;
-            const unsigned char sx = oam[oam_index + 1] - 8;
+            const int sx = oam[oam_index + 1] - 8;
             const int px_index = sfx ? ss * 2 - 2 - ly % ss * 2 : ly % ss * 2;
-            const int size = 8 - std::abs(160 - sx) % 8;
-            for (int i = 0; i < size; ++i)
+
+            for (int i = 0; i < 8; ++i)
             {
+                     if (sx + i <   0) continue;
+                else if (sx + i > 159) break;
+
                 const int px_shift = sfy ? i % 8 : 7 - i % 8;
                 const unsigned px =
                     (vram[0x0000 + si * ss * 2 + px_index    ] >> px_shift & 1) << 1 |
                     (vram[0x0000 + si * ss * 2 + px_index + 1] >> px_shift & 1);
-
-                framebuffer[(sx + i + ly * 160) / 8 * 2    ] &= ~(( 3 << 6) >> i % 8 * 2);
-                framebuffer[(sx + i + ly * 160) / 8 * 2    ] |=   (px << 6) >> i % 8 * 2;
-
-                framebuffer[(sx + i + ly * 160) / 8 * 2 + 1] &= ~(  3 << (7 - i % 8) * 2);
-                framebuffer[(sx + i + ly * 160) / 8 * 2 + 1] |=    px << (7 - i % 8) * 2;
+                set_framebuffer_pixel(sx + i + ly * 160,  px);
             }
         }
     }
