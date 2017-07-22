@@ -3,8 +3,6 @@
 
 #include "mmu.h"
 
-#include <cassert>
-
 namespace gameboy::emulator
 {
     class CPU
@@ -113,38 +111,38 @@ namespace gameboy::emulator
                     ST("LD (HL+), A",     0x22, 2, wb(HL, A); HL = HL + 1)
                     ST("LD (HL-), A",     0x32, 2, wb(HL, A); HL = HL - 1)
 
-                    ST("LD  B  , D",     0x42, 1, B = D)
-                    ST("LD  D  , D",     0x52, 1, D = D) // !!!
-                    ST("LD  H  , D",     0x62, 1, H = D)
+                    ST("LD  B  , D",     0x42, 1, B    = D)
+                    ST("LD  D  , D",     0x52, 1, D    = D) // !!!
+                    ST("LD  H  , D",     0x62, 1, H    = D)
                     ST("LD (HL), D",     0x72, 2, wb(HL, D))
 
-                    ST("LD  B  , E",     0x43, 1, B = E)
-                    ST("LD  D  , E",     0x53, 1, D = E)
-                    ST("LD  H  , E",     0x63, 1, H = E)
-                    ST("LD (HL), E",     0x73, 2, wb(HL, D))
+                    ST("LD  B  , E",     0x43, 1, B    = E)
+                    ST("LD  D  , E",     0x53, 1, D    = E)
+                    ST("LD  H  , E",     0x63, 1, H    = E)
+                    ST("LD (HL), E",     0x73, 2, wb(HL, E))
 
-                    ST("LD  B  , H",     0x44, 1, B = H)
-                    ST("LD  D  , H",     0x54, 1, D = H)
-                    ST("LD  H  , H",     0x64, 1, H = H) // !!!
+                    ST("LD  B  , H",     0x44, 1, B    = H)
+                    ST("LD  D  , H",     0x54, 1, D    = H)
+                    ST("LD  H  , H",     0x64, 1, H    = H) // !!!
                     ST("LD (HL), H",     0x74, 2, wb(HL, H))
 
-                    ST("LD  B  , L",     0x45, 1, B = L)
-                    ST("LD  D  , L",     0x55, 1, D = L)
-                    ST("LD  H  , L",     0x65, 1, H = L)
+                    ST("LD  B  , L",     0x45, 1, B    = L)
+                    ST("LD  D  , L",     0x55, 1, D    = L)
+                    ST("LD  H  , L",     0x65, 1, H    = L)
                     ST("LD (HL), L",     0x75, 2, wb(HL, L))
 
-                    ST("LD  B  , n",     0x06, 2, B = rb(PC++))
-                    ST("LD  D  , n",     0x16, 2, D = rb(PC++))
-                    ST("LD  H  , n",     0x26, 2, H = rb(PC++))
+                    ST("LD  B  , n",     0x06, 2, B    = rb(PC++))
+                    ST("LD  D  , n",     0x16, 2, D    = rb(PC++))
+                    ST("LD  H  , n",     0x26, 2, H    = rb(PC++))
                     ST("LD (HL), n",     0x36, 3, wb(HL, rb(PC++)))
 
                     ST("LD B, (HL)",     0x46, 2, B = rb(HL))
                     ST("LD D, (HL)",     0x56, 2, D = rb(HL))
                     ST("LD H, (HL)",     0x66, 2, H = rb(HL))
 
-                    ST("LD  B  , A",     0x47, 1, B = A)
-                    ST("LD  D  , A",     0x57, 1, D = A)
-                    ST("LD  H  , A",     0x67, 1, H = A)
+                    ST("LD  B  , A",     0x47, 1, B    = A)
+                    ST("LD  D  , A",     0x57, 1, D    = A)
+                    ST("LD  H  , A",     0x67, 1, H    = A)
                     ST("LD (HL), A",     0x77, 2, wb(HL, A))
 
                     ST("LD C, B",     0x48, 1, C = B)
@@ -214,10 +212,10 @@ namespace gameboy::emulator
                     ST("LD (nn), SP",     0x08, 5, ww(rw(PC), SP); PC += 2)
                     ST("LD  SP , HL",     0xF9, 2, SP = HL)
 
-                    ST("POP BC",     0xC1, 3, BC = rw(SP); SP += 2)
-                    ST("POP DE",     0xD1, 3, DE = rw(SP); SP += 2)
-                    ST("POP HL",     0xE1, 3, HL = rw(SP); SP += 2)
-                    ST("POP AF",     0xF1, 3, AF = rw(SP); SP += 2)
+                    ST("POP BC",     0xC1, 3, BC = rw(SP);          SP += 2)
+                    ST("POP DE",     0xD1, 3, DE = rw(SP);          SP += 2)
+                    ST("POP HL",     0xE1, 3, HL = rw(SP);          SP += 2)
+                    ST("POP AF",     0xF1, 3, AF = rw(SP) & 0xFFF0; SP += 2)
 
                     ST("PUSH BC",     0xC5, 4, ww(SP -= 2, BC))
                     ST("PUSH DE",     0xD5, 4, ww(SP -= 2, DE))
@@ -226,8 +224,10 @@ namespace gameboy::emulator
 
                     ST("LDHL SP, n",     0xF8, 3,
                             const auto        n = (signed char) rb(PC++);
-                            const unsigned temp = SP + n; HL = temp;
-                            cpu.set_flags((temp >> 16) << SC | (((SP & 0xFFF) + n) >> 12) << SH)
+                            const unsigned temp =  SP + n;
+                            const unsigned mask = (SP ^ n ^ temp) & 0x110;
+                                                   HL     = temp;
+                            cpu.set_flags((mask >> 8) << SC | (mask >> 4) << SH)
                     )
 
                     // jumps/calls
@@ -281,10 +281,11 @@ namespace gameboy::emulator
                     ST("RST 38H",     0xFF, 4, ww(SP -= 2, PC); PC = 0x38)
 
                     // 8-bit arithmetic/logical instructions
-#define ADD(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,      \
-                            const unsigned seco = o;                       \
-                            const unsigned temp = A + seco; A = temp;      \
-                            cpu.set_flags(!A << SZ | (temp >> 8) << SC | (((A & 0xF) + (seco & 0xF)) >> 4) << SH))
+#define ADD(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,           \
+                            const unsigned seco = o;                            \
+                            const unsigned half_carry = ((A & 0xF) + (seco & 0xF)) >> 4;  \
+                            const unsigned temp = A + seco; A = temp;                     \
+                            cpu.set_flags(!A << SZ | (temp >> 8) << SC | half_carry << SH))
                     ADD("ADD A, A",     0x87, 1,     A)
                     ADD("ADD A, B",     0x80, 1,     B)
                     ADD("ADD A, C",     0x81, 1,     C)
@@ -299,8 +300,9 @@ namespace gameboy::emulator
 #define ADC(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,           \
                             const bool     flag = cpu.get_flag(MC);             \
                             const unsigned seco = o;                            \
-                            const unsigned temp = A + seco + flag; A = temp;    \
-                            cpu.set_flags(!A << SZ | (temp >> 8) << SC | (((A & 0xF) + (seco & 0xF) + flag) >> 4) << SH))
+                            const unsigned half_carry = ((A & 0xF) + (seco & 0xF) + flag) >> 4; \
+                            const unsigned temp = A + seco + flag; A = temp;                    \
+                            cpu.set_flags(!A << SZ | (temp >> 8) << SC | half_carry << SH))
                     ADC("ADC A, A",     0x8F, 1, A)
                     ADC("ADC A, B",     0x88, 1, B)
                     ADC("ADC A, C",     0x89, 1, C)
@@ -314,8 +316,9 @@ namespace gameboy::emulator
 
 #define SUB(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,       \
                             const unsigned seco = o;                        \
-                            const unsigned temp = A - seco; A = temp;       \
-                            cpu.set_flags(!A << SZ | (temp >> 8 & 1) << SC | (((A & 0xF) - (seco & 0xF)) >> 4 & 1) << SH | MN))
+                            const unsigned half_carry = ((A & 0xF) - (seco & 0xF)) >> 4 & 1;  \
+                            const unsigned temp = A - seco; A = temp;                         \
+                            cpu.set_flags(!A << SZ | (temp >> 8 & 1) << SC | half_carry << SH | MN))
                     SUB("SUB A",     0x97, 1, A)
                     SUB("SUB B",     0x90, 1, B)
                     SUB("SUB C",     0x91, 1, C)
@@ -330,8 +333,9 @@ namespace gameboy::emulator
 #define SBC(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,           \
                             const bool     flag = cpu.get_flag(MC);             \
                             const unsigned seco = o;                            \
-                            const unsigned temp = A - seco - flag; A = temp;    \
-                            cpu.set_flags(!A << SZ | (temp >> 8 & 1) << SC | (((A & 0xF) - (seco & 0xF) - flag) >> 4 & 1) << SH | MN))
+                            const unsigned half_carry = ((A & 0xF) - (seco & 0xF) - flag) >> 4 & 1;\
+                            const unsigned temp = A - seco - flag; A = temp;                       \
+                            cpu.set_flags(!A << SZ | (temp >> 8 & 1) << SC | half_carry << SH | MN))
                     SBC("SBC A, A",     0x9F, 1, A)
                     SBC("SBC A, B",     0x98, 1, B)
                     SBC("SBC A, C",     0x99, 1, C)
@@ -381,8 +385,9 @@ namespace gameboy::emulator
 
 #define CP(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,           \
                             const unsigned seco = o;                           \
-                            const unsigned temp = A - seco;                    \
-                            cpu.set_flags(!temp << SZ | (temp >> 8 & 1) << SC | (((A & 0xF) - (seco & 0xF)) >> 4 & 1) << SH | MN))
+                            const unsigned half_carry = ((A & 0xF) - (seco & 0xF)) >> 4 & 1; \
+                            const unsigned temp = A - seco;                                  \
+                            cpu.set_flags(!temp << SZ | (temp >> 8 & 1) << SC | half_carry << SH | MN))
                     CP("CP A",     0xBF, 1, A)
                     CP("CP B",     0xB8, 1, B)
                     CP("CP C",     0xB9, 1, C)
@@ -403,7 +408,7 @@ namespace gameboy::emulator
                     INC("INC B",     0x04, 1,     B,      B  = temp)
                     INC("INC C",     0x0C, 1,     C,      C  = temp)
                     INC("INC D",     0x14, 1,     D,      D  = temp)
-                    INC("INC E",     0x1C, 1,     C,      C  = temp)
+                    INC("INC E",     0x1C, 1,     E,      E  = temp)
                     INC("INC H",     0x24, 1,     H,      H  = temp)
                     INC("INC L",     0x2C, 1,     L,      L  = temp)
                     INC("INC (HL)",  0x34, 3, rb(HL), wb(HL,   temp))
@@ -417,7 +422,7 @@ namespace gameboy::emulator
                     DEC("DEC B",     0x05, 1,     B,      B  = temp)
                     DEC("DEC C",     0x0D, 1,     C,      C  = temp)
                     DEC("DEC D",     0x15, 1,     D,      D  = temp)
-                    DEC("DEC E",     0x1D, 1,     C,      C  = temp)
+                    DEC("DEC E",     0x1D, 1,     E,      E  = temp)
                     DEC("DEC H",     0x25, 1,     H,      H  = temp)
                     DEC("DEC L",     0x2D, 1,     L,      L  = temp)
                     DEC("DEC (HL)",  0x35, 3, rb(HL), wb(HL,   temp))
@@ -426,13 +431,25 @@ namespace gameboy::emulator
                     ST("CPL",  0x2F, 1, A = A ^ 0xFF; cpu.set_flags(MN | MH, MN | MH))
                     ST("CCF",  0x3F, 1,               cpu.set_flags((cpu.regs.AF.F ^ MC) & MC, ~MZ))
                     ST("SCF",  0x37, 1,               cpu.set_flags(                       MC, ~MZ))
-                    ST("DDA",  0x27, 1, ) // !!!
+                    ST("DDA",  0x27, 1,
+                         if (!cpu.get_flag(MN))
+                         {  
+                             if (cpu.get_flag(MC) ||  A > 0x99)       { A += 0x60; cpu.regs.AF.F |= MC;}
+                             if (cpu.get_flag(MH) || (A & 0x0F) > 0x09) A += 0x6;
+                         }
+                         else
+                         { 
+                             if (cpu.get_flag(MC)) A -= 0x60;
+                             if (cpu.get_flag(MH)) A -= 0x6;
+                         }
+                         cpu.set_flags(!A << SZ, MZ | MH);
+                    )
 
                     // 16bit arithmetic/logical instructions
-#define ADD(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,       \
-                            const unsigned seco = o;                        \
-                            const unsigned temp = HL + seco; HL = temp;     \
-                            cpu.set_flags((temp >> 16) << SC | (((HL & 0xFFF) + seco) >> 12) << SH, ~MZ))
+#define ADD(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,                       \
+                            const unsigned half_carry = ((HL & 0xFFF) + (o & 0xFFF)) >> 12; \
+                            const unsigned temp = HL + o; HL = temp;                        \
+                            cpu.set_flags((temp >> 16) << SC | half_carry << SH, ~MZ))
                     ADD("ADD HL, BC",  0x09, 2, BC)
                     ADD("ADD HL, DE",  0x19, 2, DE)
                     ADD("ADD HL, HL",  0x29, 2, HL)
@@ -440,8 +457,10 @@ namespace gameboy::emulator
 #undef ADD
                     ST("ADD SP, n",  0xE8, 4,
                             const auto        n = (signed char) rb(PC++);
-                            const unsigned temp = SP + n; SP = temp;
-                            cpu.set_flags((temp >> 16) << SC | (((SP & 0xFFF) + n) >> 12) << SH)
+                            const unsigned temp = SP + n;
+                            const unsigned mask = (SP ^ n ^ temp) & 0x110;
+                                                   SP     = temp;
+                            cpu.set_flags((mask >> 8) << SC | (mask >> 4) << SH)
                     )
 
                     ST("INC BC", 0x03, 2, BC = BC + 1)
@@ -455,19 +474,17 @@ namespace gameboy::emulator
                     ST("DEC SP", 0x3B, 2, SP = SP - 1)
 
                     ST("RRCA",     0x0F, 1,
-                            const bool carry = A &    1; A = A >> 1 | carry << 7; cpu.set_flags(carry << SZ))
+                            const unsigned carry = A  & 1; A = A >> 1 | carry << 7; cpu.set_flags(carry << SC))
                     ST("RLCA",     0x07, 1,
-                            const bool carry = A & 0x80; A = A << 1 | carry;      cpu.set_flags(carry << SZ))
+                            const unsigned carry = A >> 7; A = A << 1 | carry;      cpu.set_flags(carry << SC))
 
                     ST("RRA",     0x1F, 1,
-                            const bool carry = A &    1; A = A >> 1 | cpu.get_flag(MC) << 7; cpu.set_flags(carry << SZ);)
+                            const unsigned carry = A  & 1; A = A >> 1 | cpu.get_flag(MC) << 7; cpu.set_flags(carry << SC);)
                     ST("RLA",     0x17, 1,
-                            const bool carry = A & 0x80; A = A << 1 | cpu.get_flag(MC);      cpu.set_flags(carry << SZ);) {}
+                            const unsigned carry = A >> 7; A = A << 1 | cpu.get_flag(MC);      cpu.set_flags(carry << SC);)
+                    {}
 
 #undef ST
-
-                assert(cycles);
-
                 return cycles;
             }
         };
@@ -494,9 +511,9 @@ namespace gameboy::emulator
                 if constexpr(opcode == id) {cycles = init_cycles; code;} else
 
 #define RLC(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,    \
-                            const unsigned seco = o;                                    \
-                            const bool carry = seco & 0x80;                             \
-                            const unsigned temp = carry | seco << 1; assign_method;     \
+                            const unsigned  seco =    o;                                \
+                            const unsigned carry = seco >> 7;                           \
+                            const unsigned  temp = seco << 1 | carry; assign_method;    \
                             cpu.set_flags(!(temp & 0xFF) << SZ | carry << SC))
                     RLC("RLC A",        0x07, 2,     A,     A = temp)
                     RLC("RLC B",        0x00, 2,     B,     B = temp)
@@ -510,7 +527,7 @@ namespace gameboy::emulator
 
 #define RRC(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,        \
                             const unsigned seco = o;                                        \
-                            const bool carry = seco & 1;                                    \
+                            const unsigned carry = seco & 1;                                \
                             const unsigned temp = seco >> 1 | carry << 7; assign_method;    \
                             cpu.set_flags(!temp << SZ | carry << SC))
                     RRC("RRC A",        0x0F, 2,     A,     A = temp)
@@ -525,9 +542,8 @@ namespace gameboy::emulator
 
 #define RL(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,                     \
                             const unsigned seco = o;                                                    \
-                            const bool carry = seco & 0x80;                                             \
                             const unsigned temp = seco << 1 | cpu.get_flag(MC); assign_method;          \
-                            cpu.set_flags(!(temp & 0xFF) << SZ | carry << SC))
+                            cpu.set_flags(!(temp & 0xFF) << SZ | (seco >> 7) << SC))
                     RL("RL A",        0x17, 2,     A,     A = temp)
                     RL("RL B",        0x10, 2,     B,     B = temp)
                     RL("RL C",        0x11, 2,     C,     C = temp)
@@ -540,9 +556,8 @@ namespace gameboy::emulator
 
 #define RR(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,                     \
                             const unsigned seco = o;                                                    \
-                            const bool carry = seco & 1;                                                \
                             const unsigned temp = seco >> 1 | cpu.get_flag(MC) << 7; assign_method;     \
-                            cpu.set_flags(!temp << SZ | carry << SC))
+                            cpu.set_flags(!temp << SZ | (seco & 1) << SC))
                     RR("RR A",        0x1F, 2,     A,     A = temp)
                     RR("RR B",        0x18, 2,     B,     B = temp)
                     RR("RR C",        0x19, 2,     C,     C = temp)
@@ -555,9 +570,8 @@ namespace gameboy::emulator
 
 #define SLA(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,    \
                             const unsigned seco = o;                                    \
-                            const bool carry = seco & 0x80;                             \
                             const unsigned temp = seco << 1; assign_method;             \
-                            cpu.set_flags(!(temp & 0xFF) << SZ | carry << SC))
+                            cpu.set_flags(!(temp & 0xFF) << SZ | (seco >> 7) << SC))
                     SLA("SLA A",        0x27, 2,     A,     A = temp)
                     SLA("SLA B",        0x20, 2,     B,     B = temp)
                     SLA("SLA C",        0x21, 2,     C,     C = temp)
@@ -570,9 +584,8 @@ namespace gameboy::emulator
 
 #define SRA(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,                    \
                             const unsigned seco = o;                                                    \
-                            const bool carry = seco & 1;                                                \
                             const unsigned temp = seco >> 1 | (seco & 0x80); assign_method;             \
-                            cpu.set_flags(!temp << SZ | carry << SC))
+                            cpu.set_flags(!temp << SZ | (seco & 1) << SC))
                     SRA("SRA A",        0x2F, 2,     A,     A = temp)
                     SRA("SRA B",        0x28, 2,     B,     B = temp)
                     SRA("SRA C",        0x29, 2,     C,     C = temp)
@@ -585,9 +598,8 @@ namespace gameboy::emulator
 
 #define SRL(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,    \
                             const unsigned seco = o;                                    \
-                            const bool carry = seco & 1;                                \
                             const unsigned temp = seco >> 1; assign_method;             \
-                            cpu.set_flags(!temp << SZ | carry << SC))
+                            cpu.set_flags(!temp << SZ | (seco & 1) << SC))
                     SRL("SRL A",        0x3F, 2,     A,     A = temp)
                     SRL("SRL B",        0x38, 2,     B,     B = temp)
                     SRL("SRL C",        0x39, 2,     C,     C = temp)
@@ -598,9 +610,9 @@ namespace gameboy::emulator
                     SRL("SRL (HL)",     0x3E, 4, rb(HL), wb(HL, temp))
 #undef SRL
 
-#define SWAP(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,   \
-                            const unsigned seco = o;                                    \
-                            const unsigned temp = seco >> 4 | (seco & 0xF) << 4;        \
+#define SWAP(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,               \
+                            const unsigned seco = o;                                                \
+                            const unsigned temp = seco >> 4 | (seco & 0xF) << 4; assign_method;     \
                             cpu.set_flags(!temp << SZ))
                     SWAP("SWAP A",        0x37, 2,     A,     A = temp)
                     SWAP("SWAP B",        0x30, 2,     B,     B = temp)
@@ -700,9 +712,199 @@ namespace gameboy::emulator
                     BIT7("BIT 7, (HL)",     0x7E, 4, rb(HL))
 #undef BIT7
 
-                    ST("RES 0, A",    0x87, 2, A = A & ~1) {}
+#define RES0(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o & ~0x01; assign_method)
+                    RES0("RES 0, A",        0x87, 2,     A,     A = temp)
+                    RES0("RES 0, B",        0x80, 2,     B,     B = temp)
+                    RES0("RES 0, C",        0x81, 2,     C,     C = temp)
+                    RES0("RES 0, D",        0x82, 2,     D,     D = temp)
+                    RES0("RES 0, E",        0x83, 2,     E,     E = temp)
+                    RES0("RES 0, H",        0x84, 2,     H,     H = temp)
+                    RES0("RES 0, L",        0x85, 2,     L,     L = temp)
+                    RES0("RES 0, (HL)",     0x86, 4, rb(HL), wb(HL, temp))
+#undef RES0
+
+#define RES2(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o & ~0x04; assign_method)
+                    RES2("RES 2, A",        0x97, 2,     A,     A = temp)
+                    RES2("RES 2, B",        0x90, 2,     B,     B = temp)
+                    RES2("RES 2, C",        0x91, 2,     C,     C = temp)
+                    RES2("RES 2, D",        0x92, 2,     D,     D = temp)
+                    RES2("RES 2, E",        0x93, 2,     E,     E = temp)
+                    RES2("RES 2, H",        0x94, 2,     H,     H = temp)
+                    RES2("RES 2, L",        0x95, 2,     L,     L = temp)
+                    RES2("RES 2, (HL)",     0x96, 4, rb(HL), wb(HL, temp))
+#undef RES2
+
+#define RES4(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o & ~0x10; assign_method)
+                    RES4("RES 4, A",        0xA7, 2,     A,     A = temp)
+                    RES4("RES 4, B",        0xA0, 2,     B,     B = temp)
+                    RES4("RES 4, C",        0xA1, 2,     C,     C = temp)
+                    RES4("RES 4, D",        0xA2, 2,     D,     D = temp)
+                    RES4("RES 4, E",        0xA3, 2,     E,     E = temp)
+                    RES4("RES 4, H",        0xA4, 2,     H,     H = temp)
+                    RES4("RES 4, L",        0xA5, 2,     L,     L = temp)
+                    RES4("RES 4, (HL)",     0xA6, 4, rb(HL), wb(HL, temp))
+#undef RES4
+
+#define RES6(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o & ~0x40; assign_method)
+                    RES6("RES 6, A",        0xB7, 2,     A,     A = temp)
+                    RES6("RES 6, B",        0xB0, 2,     B,     B = temp)
+                    RES6("RES 6, C",        0xB1, 2,     C,     C = temp)
+                    RES6("RES 6, D",        0xB2, 2,     D,     D = temp)
+                    RES6("RES 6, E",        0xB3, 2,     E,     E = temp)
+                    RES6("RES 6, H",        0xB4, 2,     H,     H = temp)
+                    RES6("RES 6, L",        0xB5, 2,     L,     L = temp)
+                    RES6("RES 6, (HL)",     0xB6, 4, rb(HL), wb(HL, temp))
+#undef RES6
+
+#define RES1(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o & ~0x02; assign_method)
+                    RES1("RES 1, A",        0x8F, 2,     A,     A = temp)
+                    RES1("RES 1, B",        0x88, 2,     B,     B = temp)
+                    RES1("RES 1, C",        0x89, 2,     C,     C = temp)
+                    RES1("RES 1, D",        0x8A, 2,     D,     D = temp)
+                    RES1("RES 1, E",        0x8B, 2,     E,     E = temp)
+                    RES1("RES 1, H",        0x8C, 2,     H,     H = temp)
+                    RES1("RES 1, L",        0x8D, 2,     L,     L = temp)
+                    RES1("RES 1, (HL)",     0x8E, 4, rb(HL), wb(HL, temp))
+#undef RES1
+
+#define RES3(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o & ~0x08; assign_method)
+                    RES3("RES 3, A",        0x9F, 2,     A,     A = temp)
+                    RES3("RES 3, B",        0x98, 2,     B,     B = temp)
+                    RES3("RES 3, C",        0x99, 2,     C,     C = temp)
+                    RES3("RES 3, D",        0x9A, 2,     D,     D = temp)
+                    RES3("RES 3, E",        0x9B, 2,     E,     E = temp)
+                    RES3("RES 3, H",        0x9C, 2,     H,     H = temp)
+                    RES3("RES 3, L",        0x9D, 2,     L,     L = temp)
+                    RES3("RES 3, (HL)",     0x9E, 4, rb(HL), wb(HL, temp))
+#undef RES3
+
+#define RES5(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o & ~0x20; assign_method)
+                    RES5("RES 5, A",        0xAF, 2,     A,     A = temp)
+                    RES5("RES 5, B",        0xA8, 2,     B,     B = temp)
+                    RES5("RES 5, C",        0xA9, 2,     C,     C = temp)
+                    RES5("RES 5, D",        0xAA, 2,     D,     D = temp)
+                    RES5("RES 5, E",        0xAB, 2,     E,     E = temp)
+                    RES5("RES 5, H",        0xAC, 2,     H,     H = temp)
+                    RES5("RES 5, L",        0xAD, 2,     L,     L = temp)
+                    RES5("RES 5, (HL)",     0xAE, 4, rb(HL), wb(HL, temp))
+#undef RES5
+
+#define RES7(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o & ~0x80; assign_method)
+                    RES7("RES 7, A",        0xBF, 2,     A,     A = temp)
+                    RES7("RES 7, B",        0xB8, 2,     B,     B = temp)
+                    RES7("RES 7, C",        0xB9, 2,     C,     C = temp)
+                    RES7("RES 7, D",        0xBA, 2,     D,     D = temp)
+                    RES7("RES 7, E",        0xBB, 2,     E,     E = temp)
+                    RES7("RES 7, H",        0xBC, 2,     H,     H = temp)
+                    RES7("RES 7, L",        0xBD, 2,     L,     L = temp)
+                    RES7("RES 7, (HL)",     0xBE, 4, rb(HL), wb(HL, temp))
+#undef RES7
+
+#define SET0(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o | 0x01; assign_method)
+                    SET0("SET 0, A",        0xC7, 2,     A,     A = temp)
+                    SET0("SET 0, B",        0xC0, 2,     B,     B = temp)
+                    SET0("SET 0, C",        0xC1, 2,     C,     C = temp)
+                    SET0("SET 0, D",        0xC2, 2,     D,     D = temp)
+                    SET0("SET 0, E",        0xC3, 2,     E,     E = temp)
+                    SET0("SET 0, H",        0xC4, 2,     H,     H = temp)
+                    SET0("SET 0, L",        0xC5, 2,     L,     L = temp)
+                    SET0("SET 0, (HL)",     0xC6, 4, rb(HL), wb(HL, temp))
+#undef SET0
+
+#define SET2(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o | 0x04; assign_method)
+                    SET2("SET 2, A",        0xD7, 2,     A,     A = temp)
+                    SET2("SET 2, B",        0xD0, 2,     B,     B = temp)
+                    SET2("SET 2, C",        0xD1, 2,     C,     C = temp)
+                    SET2("SET 2, D",        0xD2, 2,     D,     D = temp)
+                    SET2("SET 2, E",        0xD3, 2,     E,     E = temp)
+                    SET2("SET 2, H",        0xD4, 2,     H,     H = temp)
+                    SET2("SET 2, L",        0xD5, 2,     L,     L = temp)
+                    SET2("SET 2, (HL)",     0xD6, 4, rb(HL), wb(HL, temp))
+#undef SET2
+
+#define SET4(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o | 0x10; assign_method)
+                    SET4("SET 4, A",        0xE7, 2,     A,     A = temp)
+                    SET4("SET 4, B",        0xE0, 2,     B,     B = temp)
+                    SET4("SET 4, C",        0xE1, 2,     C,     C = temp)
+                    SET4("SET 4, D",        0xE2, 2,     D,     D = temp)
+                    SET4("SET 4, E",        0xE3, 2,     E,     E = temp)
+                    SET4("SET 4, H",        0xE4, 2,     H,     H = temp)
+                    SET4("SET 4, L",        0xE5, 2,     L,     L = temp)
+                    SET4("SET 4, (HL)",     0xE6, 4, rb(HL), wb(HL, temp))
+#undef SET4
+
+#define SET6(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o | 0x40; assign_method)
+                    SET6("SET 6, A",        0xF7, 2,     A,     A = temp)
+                    SET6("SET 6, B",        0xF0, 2,     B,     B = temp)
+                    SET6("SET 6, C",        0xF1, 2,     C,     C = temp)
+                    SET6("SET 6, D",        0xF2, 2,     D,     D = temp)
+                    SET6("SET 6, E",        0xF3, 2,     E,     E = temp)
+                    SET6("SET 6, H",        0xF4, 2,     H,     H = temp)
+                    SET6("SET 6, L",        0xF5, 2,     L,     L = temp)
+                    SET6("SET 6, (HL)",     0xF6, 4, rb(HL), wb(HL, temp))
+#undef SET6
+
+#define SET1(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o | 0x02; assign_method)
+                    SET1("SET 1, A",        0xCF, 2,     A,     A = temp)
+                    SET1("SET 1, B",        0xC8, 2,     B,     B = temp)
+                    SET1("SET 1, C",        0xC9, 2,     C,     C = temp)
+                    SET1("SET 1, D",        0xCA, 2,     D,     D = temp)
+                    SET1("SET 1, E",        0xCB, 2,     E,     E = temp)
+                    SET1("SET 1, H",        0xCC, 2,     H,     H = temp)
+                    SET1("SET 1, L",        0xCD, 2,     L,     L = temp)
+                    SET1("SET 1, (HL)",     0xCE, 4, rb(HL), wb(HL, temp))
+#undef SET1
+
+#define SET3(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o | 0x08; assign_method)
+                    SET3("SET 3, A",        0xDF, 2,     A,     A = temp)
+                    SET3("SET 3, B",        0xD8, 2,     B,     B = temp)
+                    SET3("SET 3, C",        0xD9, 2,     C,     C = temp)
+                    SET3("SET 3, D",        0xDA, 2,     D,     D = temp)
+                    SET3("SET 3, E",        0xDB, 2,     E,     E = temp)
+                    SET3("SET 3, H",        0xDC, 2,     H,     H = temp)
+                    SET3("SET 3, L",        0xDD, 2,     L,     L = temp)
+                    SET3("SET 3, (HL)",     0xDE, 4, rb(HL), wb(HL, temp))
+#undef SET3
+
+#define SET5(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o | 0x20; assign_method)
+                    SET5("SET 5, A",        0xEF, 2,     A,     A = temp)
+                    SET5("SET 5, B",        0xE8, 2,     B,     B = temp)
+                    SET5("SET 5, C",        0xE9, 2,     C,     C = temp)
+                    SET5("SET 5, D",        0xEA, 2,     D,     D = temp)
+                    SET5("SET 5, E",        0xEB, 2,     E,     E = temp)
+                    SET5("SET 5, H",        0xEC, 2,     H,     H = temp)
+                    SET5("SET 5, L",        0xED, 2,     L,     L = temp)
+                    SET5("SET 5, (HL)",     0xEE, 4, rb(HL), wb(HL, temp))
+#undef SET5
+
+#define SET7(mnemonic, opcode, cycles, o, assign_method) \
+                            ST(mnemonic, opcode, cycles, const unsigned temp = o | 0x80; assign_method)
+                    SET7("SET 7, A",        0xFF, 2,     A,     A = temp)
+                    SET7("SET 7, B",        0xF8, 2,     B,     B = temp)
+                    SET7("SET 7, C",        0xF9, 2,     C,     C = temp)
+                    SET7("SET 7, D",        0xFA, 2,     D,     D = temp)
+                    SET7("SET 7, E",        0xFB, 2,     E,     E = temp)
+                    SET7("SET 7, H",        0xFC, 2,     H,     H = temp)
+                    SET7("SET 7, L",        0xFD, 2,     L,     L = temp)
+                    SET7("SET 7, (HL)",     0xFE, 4, rb(HL), wb(HL, temp)) {}
+#undef SET7
+
 #undef ST
-                assert(cycles);
                 return cycles;
             }
         };

@@ -5,10 +5,13 @@
 #include "cpu.h"
 #include "dma.h"
 
+#include <cassert>
+
 using gameboy::emulator::MMU;
 
 void MMU::write_byte(unsigned address, unsigned value) const noexcept
 {
+    assert(address <= 0xFFFF);
          if (address < 0x8000);
     else if (address < 0xA000) mem_pointers.gpu->vram[address - 0x8000] = value;
     else if (address < 0xC000) mem_pointers.cartridge->write_ram(address - 0xA000, value);
@@ -31,7 +34,7 @@ void MMU::write_byte(unsigned address, unsigned value) const noexcept
             case 0xFF4A: mem_pointers.gpu->wy = value;                  break;
             case 0xFF4B: mem_pointers.gpu->wx = value;                  break;
         }
-    else if (address  < 0xFFFF) mem_pointers.hram[address - 0xFF80] = value;
+    else if (address < 0xFFFF) mem_pointers.hram[address - 0xFF80] = value;
     else mem_pointers.cpu->IE = value;
 }
 
@@ -43,6 +46,7 @@ void MMU::write_word(unsigned address, unsigned value) const noexcept
 
 unsigned MMU::read_byte(unsigned address) const noexcept
 {
+    assert(address <= 0xFFFF);
          if (address < 0x8000) return mem_pointers.cartridge->read_rom(address);
     else if (address < 0xA000) return mem_pointers.gpu->vram[address - 0x8000];
     else if (address < 0xC000) return mem_pointers.cartridge->read_ram(address - 0xA000);

@@ -1,4 +1,14 @@
 
+    std::clog << std::hex;
+    std::clog << "----------------" << std::endl;
+    std::clog << "AF = " << std::setfill('0') << std::setw(4) << regs.AF << std::endl;
+    std::clog << "BC = " << std::setfill('0') << std::setw(4) << regs.BC << std::endl;
+    std::clog << "DE = " << std::setfill('0') << std::setw(4) << regs.DE << std::endl;
+    std::clog << "HL = " << std::setfill('0') << std::setw(4) << regs.HL << std::endl;
+    std::clog << "SP = " << std::setfill('0') << std::setw(4) << regs.SP << std::endl;
+    std::clog << "PC = " << std::setfill('0') << std::setw(4) << regs.PC << std::endl << std::endl;
+    std::clog << "IF = " << std::bitset<5>(IF) << std::endl;
+    std::clog << "FF = " << std::bitset<4>(regs.AF.F >> 4) << std::endl << std::endl;
 /*
 #define ST(str, code) if constexpr ((str [opcode / 6] - ' ') >> (opcode % 6) & 1) {std::cout <<#code<< std::endl;}
                 ST(R"($"(A 2(@$ #@ "(@ "(@ "(@ "(@ "(@     4 !   )", temp = A)

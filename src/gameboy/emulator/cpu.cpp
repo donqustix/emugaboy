@@ -1,7 +1,5 @@
 #include "cpu.h"
 
-#include <iostream>
-
 using gameboy::emulator::CPU;
 
 unsigned CPU::next_step(const MMU& mmu) noexcept
@@ -13,7 +11,7 @@ unsigned CPU::next_step(const MMU& mmu) noexcept
         {
             interrupt_master_enable = false;
             int i = 0;
-            for (; mask >> i ^ 1; ++i)
+            for (; (mask >> i & 1) ^ 1; ++i)
                  ;
             IF &= ~(1 << i);
 
@@ -41,8 +39,8 @@ unsigned CPU::next_step(const MMU& mmu) noexcept
     };
 
     unsigned opcode = mmu.read_byte(regs.PC++);
-    if ((opcode & 0xFF) == 0xCB)
-         opcode = mmu.read_byte(regs.PC++) + 256;
+    if (opcode == 0xCB)
+        opcode = mmu.read_byte(regs.PC++) + 256;
 
     return (insts[opcode])(*this, mmu);
 }

@@ -6,7 +6,7 @@
 
 #include <SDL2/SDL.h>
 
-#include <iostream>
+#include <fstream>
 
 int main()
 {
@@ -42,7 +42,24 @@ int main()
         previous_time = current_time;
 
         for (static SDL_Event event; ::SDL_PollEvent(&event);)
-            if (event.type == SDL_QUIT) running = false;
+        {
+            static bool triggered = false;
+            if      (event.type == SDL_QUIT) running = false;
+            else if (event.type == SDL_KEYDOWN)
+                triggered = true;
+            else if (triggered)
+            {
+                std::ofstream stream{"res/images/screenshot.ppm", std::ios::out | std::ios::binary};
+                stream << "P6\n" << 160 << ' ' << 144 << '\n' << 255 << '\n';
+                for (int i = 0; i < 160 * 144; ++i)
+                {
+                    const unsigned char px = 0xFF * (3 - gpu.get_framebuffer_pixel(i)) / 3;
+                    const unsigned char color[]{px, px, px};
+                    stream.write(reinterpret_cast<const char*>(color), 3);
+                }
+                triggered = false;
+            }
+        }
 
         for (; acc_update_time >= seconds_per_update; acc_update_time -= seconds_per_update)
         {

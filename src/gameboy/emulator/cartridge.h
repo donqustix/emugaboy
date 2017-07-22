@@ -25,7 +25,7 @@ namespace gameboy::emulator
         MBCs get_mbc_type() const noexcept {return mbc_type(rom);}
 
         unsigned char read_rom(unsigned index) const noexcept {return rom[index];}
-        unsigned char read_ram(unsigned index) const noexcept {return ram[index];}
+        unsigned char read_ram(unsigned index) const noexcept {return ram.size() ? ram[index] : 0xFF;}
     };
 }
 

@@ -30,7 +30,7 @@ void GPU::draw_sprites() noexcept
         {
             const unsigned char si = ss == 16 ? oam[oam_index + 2] & 0xFE : oam[oam_index + 2];
             const unsigned char sa = oam[oam_index + 3];
-            const bool sp = sa & 0x80, sfy = sa & 0x40, sfx = sa & 0x20;
+            const bool /*sp = sa & 0x80,*/ sfy = sa & 0x40, sfx = sa & 0x20;
             const int sx = oam[oam_index + 1] - 8;
             const int px_index = sfx ? ss * 2 - 2 - ly % ss * 2 : ly % ss * 2;
 
@@ -100,12 +100,15 @@ void GPU::write_oam(unsigned index, unsigned value) noexcept
 
 void GPU::write_lcd_control(unsigned value) noexcept
 {
-    if ((control = value) & CONTROL_MASK_LCD_DISPLAY_ENABLE) {
-        stat = (stat & ~STAT_MASK_MODE_FLAG) | STAT_MODE_READ_OAM;   mode_clock = 0;
+    if ((control ^ value) & CONTROL_MASK_LCD_DISPLAY_ENABLE)
+    {
+        if (value & CONTROL_MASK_LCD_DISPLAY_ENABLE) {
+            stat = (stat & ~STAT_MASK_MODE_FLAG) | STAT_MODE_READ_OAM;      mode_clock = 0;
+        } else {
+            stat &= ~(STAT_MASK_MODE_FLAG | STAT_MASK_COINCIDENCE_FLAG);    ly = 0;
+        }
     }
-    else {
-        stat &= ~(STAT_MASK_MODE_FLAG | STAT_MASK_COINCIDENCE_FLAG);         ly = 0;
-    }
+    control = value;
 }
 
 unsigned GPU::tick(unsigned cycles) noexcept
