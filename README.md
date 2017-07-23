@@ -37,9 +37,7 @@ Type 'make run' to run the program.
 
 ![alt tag](/res/images/dr_mario/example_1.png)
 ![alt tag](/res/images/dr_mario/example_2.png)
-![alt tag](/res/images/dr_mario/example_3.png)
 
 ![alt tag](/res/images/kwirk/example_1.png)
 ![alt tag](/res/images/kwirk/example_2.png)
-![alt tag](/res/images/kwirk/example_3.png)
 
