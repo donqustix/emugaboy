@@ -111,38 +111,38 @@ namespace gameboy::emulator
                     ST("LD (HL+), A",     0x22, 2, wb(HL, A); HL = HL + 1)
                     ST("LD (HL-), A",     0x32, 2, wb(HL, A); HL = HL - 1)
 
-                    ST("LD  B  , D",     0x42, 1, B    = D)
-                    ST("LD  D  , D",     0x52, 1, D    = D) // !!!
-                    ST("LD  H  , D",     0x62, 1, H    = D)
+                    ST("LD  B  , D",     0x42, 1,    B = D)
+                    ST("LD  D  , D",     0x52, 1,    D = D) // !!!
+                    ST("LD  H  , D",     0x62, 1,    H = D)
                     ST("LD (HL), D",     0x72, 2, wb(HL, D))
 
-                    ST("LD  B  , E",     0x43, 1, B    = E)
-                    ST("LD  D  , E",     0x53, 1, D    = E)
-                    ST("LD  H  , E",     0x63, 1, H    = E)
+                    ST("LD  B  , E",     0x43, 1,    B = E)
+                    ST("LD  D  , E",     0x53, 1,    D = E)
+                    ST("LD  H  , E",     0x63, 1,    H = E)
                     ST("LD (HL), E",     0x73, 2, wb(HL, E))
 
-                    ST("LD  B  , H",     0x44, 1, B    = H)
-                    ST("LD  D  , H",     0x54, 1, D    = H)
-                    ST("LD  H  , H",     0x64, 1, H    = H) // !!!
+                    ST("LD  B  , H",     0x44, 1,    B = H)
+                    ST("LD  D  , H",     0x54, 1,    D = H)
+                    ST("LD  H  , H",     0x64, 1,    H = H) // !!!
                     ST("LD (HL), H",     0x74, 2, wb(HL, H))
 
-                    ST("LD  B  , L",     0x45, 1, B    = L)
-                    ST("LD  D  , L",     0x55, 1, D    = L)
-                    ST("LD  H  , L",     0x65, 1, H    = L)
+                    ST("LD  B  , L",     0x45, 1,    B = L)
+                    ST("LD  D  , L",     0x55, 1,    D = L)
+                    ST("LD  H  , L",     0x65, 1,    H = L)
                     ST("LD (HL), L",     0x75, 2, wb(HL, L))
 
-                    ST("LD  B  , n",     0x06, 2, B    = rb(PC++))
-                    ST("LD  D  , n",     0x16, 2, D    = rb(PC++))
-                    ST("LD  H  , n",     0x26, 2, H    = rb(PC++))
+                    ST("LD  B  , n",     0x06, 2,    B = rb(PC++))
+                    ST("LD  D  , n",     0x16, 2,    D = rb(PC++))
+                    ST("LD  H  , n",     0x26, 2,    H = rb(PC++))
                     ST("LD (HL), n",     0x36, 3, wb(HL, rb(PC++)))
 
                     ST("LD B, (HL)",     0x46, 2, B = rb(HL))
                     ST("LD D, (HL)",     0x56, 2, D = rb(HL))
                     ST("LD H, (HL)",     0x66, 2, H = rb(HL))
 
-                    ST("LD  B  , A",     0x47, 1, B    = A)
-                    ST("LD  D  , A",     0x57, 1, D    = A)
-                    ST("LD  H  , A",     0x67, 1, H    = A)
+                    ST("LD  B  , A",     0x47, 1,    B = A)
+                    ST("LD  D  , A",     0x57, 1,    D = A)
+                    ST("LD  H  , A",     0x67, 1,    H = A)
                     ST("LD (HL), A",     0x77, 2, wb(HL, A))
 
                     ST("LD C, B",     0x48, 1, C = B)
@@ -283,8 +283,9 @@ namespace gameboy::emulator
                     // 8-bit arithmetic/logical instructions
 #define ADD(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,           \
                             const unsigned seco = o;                            \
-                            const unsigned half_carry = ((A & 0xF) + (seco & 0xF)) >> 4;  \
-                            const unsigned temp = A + seco; A = temp;                     \
+                            const unsigned temp = A + seco;                             \
+                            const unsigned half_carry = (A ^ seco ^ temp) >> 4 & 1;     \
+                                                         A        = temp;               \
                             cpu.set_flags(!A << SZ | (temp >> 8) << SC | half_carry << SH))
                     ADD("ADD A, A",     0x87, 1,     A)
                     ADD("ADD A, B",     0x80, 1,     B)
@@ -300,8 +301,9 @@ namespace gameboy::emulator
 #define ADC(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,           \
                             const bool     flag = cpu.get_flag(MC);             \
                             const unsigned seco = o;                            \
-                            const unsigned half_carry = ((A & 0xF) + (seco & 0xF) + flag) >> 4; \
-                            const unsigned temp = A + seco + flag; A = temp;                    \
+                            const unsigned temp = A + seco + flag;                      \
+                            const unsigned half_carry = (A ^ seco ^ temp) >> 4 & 1;     \
+                                                         A        = temp;               \
                             cpu.set_flags(!A << SZ | (temp >> 8) << SC | half_carry << SH))
                     ADC("ADC A, A",     0x8F, 1, A)
                     ADC("ADC A, B",     0x88, 1, B)
@@ -316,16 +318,17 @@ namespace gameboy::emulator
 
 #define SUB(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,       \
                             const unsigned seco = o;                        \
-                            const unsigned half_carry = ((A & 0xF) - (seco & 0xF)) >> 4 & 1;  \
-                            const unsigned temp = A - seco; A = temp;                         \
-                            cpu.set_flags(!A << SZ | (temp >> 8 & 1) << SC | half_carry << SH | MN))
-                    SUB("SUB A",     0x97, 1, A)
-                    SUB("SUB B",     0x90, 1, B)
-                    SUB("SUB C",     0x91, 1, C)
-                    SUB("SUB D",     0x92, 1, D)
-                    SUB("SUB E",     0x93, 1, E)
-                    SUB("SUB H",     0x94, 1, H)
-                    SUB("SUB L",     0x95, 1, L)
+                            const unsigned temp = A - seco;                             \
+                            const unsigned mask = (A ^ seco ^ temp) & 0x110;            \
+                                                   A        = temp;                     \
+                            cpu.set_flags(!A << SZ | (mask >> 8) << SC | (mask >> 4) << SH | MN))
+                    SUB("SUB A",     0x97, 1,     A)
+                    SUB("SUB B",     0x90, 1,     B)
+                    SUB("SUB C",     0x91, 1,     C)
+                    SUB("SUB D",     0x92, 1,     D)
+                    SUB("SUB E",     0x93, 1,     E)
+                    SUB("SUB H",     0x94, 1,     H)
+                    SUB("SUB L",     0x95, 1,     L)
                     SUB("SUB n",     0xD6, 2, rb(PC++))
                     SUB("SUB (HL)",  0x96, 2, rb(HL  ))
 #undef SUB
@@ -333,68 +336,69 @@ namespace gameboy::emulator
 #define SBC(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,           \
                             const bool     flag = cpu.get_flag(MC);             \
                             const unsigned seco = o;                            \
-                            const unsigned half_carry = ((A & 0xF) - (seco & 0xF) - flag) >> 4 & 1;\
-                            const unsigned temp = A - seco - flag; A = temp;                       \
-                            cpu.set_flags(!A << SZ | (temp >> 8 & 1) << SC | half_carry << SH | MN))
-                    SBC("SBC A, A",     0x9F, 1, A)
-                    SBC("SBC A, B",     0x98, 1, B)
-                    SBC("SBC A, C",     0x99, 1, C)
-                    SBC("SBC A, D",     0x9A, 1, D)
-                    SBC("SBC A, E",     0x9B, 1, E)
-                    SBC("SBC A, H",     0x9C, 1, H)
-                    SBC("SBC A, L",     0x9D, 1, L)
+                            const unsigned temp = A - seco - flag;              \
+                            const unsigned mask = (A ^ seco ^ temp) & 0x110;    \
+                                                   A        = temp;             \
+                            cpu.set_flags(!A << SZ | (mask >> 8) << SC | (mask >> 4) << SH | MN))
+                    SBC("SBC A, A",     0x9F, 1,     A)
+                    SBC("SBC A, B",     0x98, 1,     B)
+                    SBC("SBC A, C",     0x99, 1,     C)
+                    SBC("SBC A, D",     0x9A, 1,     D)
+                    SBC("SBC A, E",     0x9B, 1,     E)
+                    SBC("SBC A, H",     0x9C, 1,     H)
+                    SBC("SBC A, L",     0x9D, 1,     L)
                     SBC("SBC A, n",     0xDE, 2, rb(PC++))
                     SBC("SBC A, (HL)",  0x9E, 2, rb(HL  ))
 #undef SBC
 
 #define AND(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, A = A & o; cpu.set_flags(!A << SZ | MH))
-                    AND("AND A",     0xA7, 1, A)
-                    AND("AND B",     0xA0, 1, B)
-                    AND("AND C",     0xA1, 1, C)
-                    AND("AND D",     0xA2, 1, D)
-                    AND("AND E",     0xA3, 1, E)
-                    AND("AND H",     0xA4, 1, H)
-                    AND("AND L",     0xA5, 1, L)
+                    AND("AND A",     0xA7, 1,     A)
+                    AND("AND B",     0xA0, 1,     B)
+                    AND("AND C",     0xA1, 1,     C)
+                    AND("AND D",     0xA2, 1,     D)
+                    AND("AND E",     0xA3, 1,     E)
+                    AND("AND H",     0xA4, 1,     H)
+                    AND("AND L",     0xA5, 1,     L)
                     AND("AND n",     0xE6, 2, rb(PC++))
                     AND("AND (HL)",  0xA6, 2, rb(HL  ))
 #undef AND
 
 #define XOR(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, A = A ^ o; cpu.set_flags(!A << SZ))
-                    XOR("XOR A",     0xAF, 1, A)
-                    XOR("XOR B",     0xA8, 1, B)
-                    XOR("XOR C",     0xA9, 1, C)
-                    XOR("XOR D",     0xAA, 1, D)
-                    XOR("XOR E",     0xAB, 1, E)
-                    XOR("XOR H",     0xAC, 1, H)
-                    XOR("XOR L",     0xAD, 1, L)
+                    XOR("XOR A",     0xAF, 1,     A)
+                    XOR("XOR B",     0xA8, 1,     B)
+                    XOR("XOR C",     0xA9, 1,     C)
+                    XOR("XOR D",     0xAA, 1,     D)
+                    XOR("XOR E",     0xAB, 1,     E)
+                    XOR("XOR H",     0xAC, 1,     H)
+                    XOR("XOR L",     0xAD, 1,     L)
                     XOR("XOR n",     0xEE, 2, rb(PC++))
                     XOR("XOR (HL)",  0xAE, 2, rb(HL  ))
 #undef XOR
 
 #define OR(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, A = A | o; cpu.set_flags(!A << SZ))
-                    OR("OR A",     0xB7, 1, A)
-                    OR("OR B",     0xB0, 1, B)
-                    OR("OR C",     0xB1, 1, C)
-                    OR("OR D",     0xB2, 1, D)
-                    OR("OR E",     0xB3, 1, E)
-                    OR("OR H",     0xB4, 1, H)
-                    OR("OR L",     0xB5, 1, L)
+                    OR("OR A",     0xB7, 1,     A)
+                    OR("OR B",     0xB0, 1,     B)
+                    OR("OR C",     0xB1, 1,     C)
+                    OR("OR D",     0xB2, 1,     D)
+                    OR("OR E",     0xB3, 1,     E)
+                    OR("OR H",     0xB4, 1,     H)
+                    OR("OR L",     0xB5, 1,     L)
                     OR("OR n",     0xF6, 2, rb(PC++))
                     OR("OR (HL)",  0xB6, 2, rb(HL  ))
 #undef OR
 
-#define CP(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,           \
-                            const unsigned seco = o;                           \
-                            const unsigned half_carry = ((A & 0xF) - (seco & 0xF)) >> 4 & 1; \
-                            const unsigned temp = A - seco;                                  \
-                            cpu.set_flags(!temp << SZ | (temp >> 8 & 1) << SC | half_carry << SH | MN))
-                    CP("CP A",     0xBF, 1, A)
-                    CP("CP B",     0xB8, 1, B)
-                    CP("CP C",     0xB9, 1, C)
-                    CP("CP D",     0xBA, 1, D)
-                    CP("CP E",     0xBB, 1, E)
-                    CP("CP H",     0xBC, 1, H)
-                    CP("CP L",     0xBD, 1, L)
+#define CP(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,            \
+                            const unsigned seco =         o;                    \
+                            const unsigned temp =  A - seco;                    \
+                            const unsigned mask = (A ^ seco ^ temp) & 0x110;    \
+                            cpu.set_flags(!temp << SZ | (mask >> 8) << SC | (mask >> 4) << SH | MN))
+                    CP("CP A",     0xBF, 1,     A)
+                    CP("CP B",     0xB8, 1,     B)
+                    CP("CP C",     0xB9, 1,     C)
+                    CP("CP D",     0xBA, 1,     D)
+                    CP("CP E",     0xBB, 1,     E)
+                    CP("CP H",     0xBC, 1,     H)
+                    CP("CP L",     0xBD, 1,     L)
                     CP("CP n",     0xFE, 2, rb(PC++))
                     CP("CP (HL)",  0xBE, 2, rb(HL  ))
 
@@ -403,7 +407,7 @@ namespace gameboy::emulator
 #define INC(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,     \
                             const unsigned seco = o;                                     \
                             const unsigned temp = seco + 1; assign_method;               \
-                            cpu.set_flags(!(temp & 0xFF) << SZ | (((seco & 0xF) + 1) >> 4) << SH, ~MC))
+                            cpu.set_flags(!(temp & 0xFF) << SZ | ((seco ^ temp) >> 4 & 1) << SH, ~MC))
                     INC("INC A",     0x3C, 1,     A,      A  = temp)
                     INC("INC B",     0x04, 1,     B,      B  = temp)
                     INC("INC C",     0x0C, 1,     C,      C  = temp)
@@ -417,7 +421,7 @@ namespace gameboy::emulator
 #define DEC(mnemonic, opcode, cycles, o, assign_method) ST(mnemonic, opcode, cycles,     \
                             const unsigned seco = o;                                     \
                             const unsigned temp = seco - 1; assign_method;               \
-                            cpu.set_flags(!temp << SZ | (((seco & 0xF) - 1) >> 4 & 1) << SH | MN, ~MC))
+                            cpu.set_flags(!temp << SZ | ((seco ^ temp) >> 4 & 1) << SH | MN, ~MC))
                     DEC("DEC A",     0x3D, 1,     A,      A  = temp)
                     DEC("DEC B",     0x05, 1,     B,      B  = temp)
                     DEC("DEC C",     0x0D, 1,     C,      C  = temp)
@@ -446,9 +450,10 @@ namespace gameboy::emulator
                     )
 
                     // 16bit arithmetic/logical instructions
-#define ADD(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,                       \
-                            const unsigned half_carry = ((HL & 0xFFF) + (o & 0xFFF)) >> 12; \
-                            const unsigned temp = HL + o; HL = temp;                        \
+#define ADD(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles,                   \
+                            const unsigned temp = HL + o;                               \
+                            const unsigned half_carry = (HL ^ o ^ temp) >> 12 & 1;      \
+                                                         HL     = temp;                 \
                             cpu.set_flags((temp >> 16) << SC | half_carry << SH, ~MZ))
                     ADD("ADD HL, BC",  0x09, 2, BC)
                     ADD("ADD HL, DE",  0x19, 2, DE)
