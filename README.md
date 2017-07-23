@@ -4,7 +4,7 @@ Q: What's done at the moment?
 A: All the CPU's instructions are implemented, and they pass Blargg's tests. The emulator supports ROMs without a MBC chip. Timers, audio, and joypad are not supported.
 
 ## Building
-The project requires g++ with support of C++17.  
+The project requires g++ that supports C++17.  
 The project requires SDL2 to be installed in your system.
 
 **Enter the following commands to build for Linux**

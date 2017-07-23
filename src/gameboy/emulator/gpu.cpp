@@ -65,40 +65,29 @@ void GPU::scanline() noexcept
 
 void GPU::write_oam_dma(unsigned index, unsigned value) noexcept
 {
-    if ((index & 3) < 2)
+    if ((index & 2) ^ 2)
     {
-        switch (index & 1)
+        oam_indices.remove(index / 4 * 4);
+        if (value && value < (index & 1 ? 168 : 160))
         {
-            case 0:
-                if (!value || value >= 160)
-                    oam_indices.remove(index / 4 * 4);
-                break;
-            case 1:
-                oam_indices.remove(index / 4 * 4);
-                if (!value || value >= 168)
-                    break;
-                else
+            const int oam_index = index / 4 * 4;
+            auto   iter  = oam_indices.begin();
+            for (; iter != oam_indices.end(); ++iter)
+            {
+                const unsigned x = oam[*iter + 1];
+                const unsigned y = oam[*iter    ];
+                if      (x  < value) oam_indices.insert(iter,  oam_index);
+                else if (x == value)
                 {
-                    const int oam_index = index / 4 * 4;
-                    auto   iter  = oam_indices.begin();
-                    for (; iter != oam_indices.end(); ++iter)
-                    {
-                        const unsigned x = oam[*iter + 1];
-                        const unsigned y = oam[*iter    ];
-                        if      (x  < value) oam_indices.insert(iter,  oam_index);
-                        else if (x == value)
-                        {
-                            if (y == oam[oam_index])
-                                *iter  = oam_index;
-                            else
-                                oam_indices.insert(iter, oam_index);
-                        }
-                        else continue;
-                        break;
-                    }
-                    if (iter == oam_indices.end()) oam_indices.insert(iter, oam_index);
+                    if (y == oam[oam_index])
+                        *iter  = oam_index;
+                    else
+                        oam_indices.insert(iter, oam_index);
                 }
+                else continue;
                 break;
+            }
+            if (iter == oam_indices.end()) oam_indices.insert(iter, oam_index);
         }
     }
     oam[index] = value;

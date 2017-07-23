@@ -10,7 +10,7 @@
 
 int main()
 {
-    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/Kwirk.gb")};
+    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/Amida.gb")};
     gameboy::emulator::CPU cpu;
     gameboy::emulator::GPU gpu;
     unsigned char wram[0x2000], hram[0x7F];
