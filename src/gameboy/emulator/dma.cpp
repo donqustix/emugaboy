@@ -14,7 +14,7 @@ void DMA::tick(unsigned cycles) noexcept
             if (init) init = false;
             else
             {
-                gpu->write_oam(dst_address++, mmu->read_byte(src_address++));
+                gpu->write_oam_dma(dst_address++, mmu->read_byte(src_address++));
                 if (dst_address == 0xA0) enabled = false;
             }
         }

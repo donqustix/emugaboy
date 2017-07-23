@@ -53,11 +53,15 @@ namespace gameboy::emulator
             framebuffer[index / 4] |=   px << (6 - index % 4 * 2);
         }
 
-        void draw_background() noexcept;
-        void draw_sprites() noexcept;
+        void scanline_background() noexcept;
+        void scanline_sprites() noexcept;
         void scanline() noexcept;
     public:
-        void write_oam(unsigned index, unsigned value) noexcept;
+        void write_oam_dma(unsigned index, unsigned value) noexcept;
+        void write_oam_cpu(unsigned index, unsigned value) noexcept {if ((stat & 2) ^ 2) write_oam_dma(index, value);}
+        void write_ram(unsigned index, unsigned value) noexcept {if ((stat & 3) ^ 3) vram[index] = value;}
+        unsigned read_oam(unsigned index) const noexcept {return (stat & 2) ^ 2 ?  oam[index] : 0xFF;}
+        unsigned read_ram(unsigned index) const noexcept {return (stat & 3) ^ 3 ? vram[index] : 0xFF;}
         void write_lcd_control(unsigned value) noexcept;
         void write_lcd_stat(unsigned value) noexcept {stat &= 7; stat |= value & ~7;}
         unsigned tick(unsigned cycles) noexcept;

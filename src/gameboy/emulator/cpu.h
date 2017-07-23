@@ -637,7 +637,7 @@ namespace gameboy::emulator
                     BIT0("BIT 0, E",        0x43, 2,     E)
                     BIT0("BIT 0, H",        0x44, 2,     H)
                     BIT0("BIT 0, L",        0x45, 2,     L)
-                    BIT0("BIT 0, (HL)",     0x46, 4, rb(HL))
+                    BIT0("BIT 0, (HL)",     0x46, 3, rb(HL))
 #undef BIT0
 
 #define BIT2(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, cpu.set_flags(!(o & 0x04) << SZ | MH, ~MC))
@@ -648,7 +648,7 @@ namespace gameboy::emulator
                     BIT2("BIT 2, E",        0x53, 2,     E)
                     BIT2("BIT 2, H",        0x54, 2,     H)
                     BIT2("BIT 2, L",        0x55, 2,     L)
-                    BIT2("BIT 2, (HL)",     0x56, 4, rb(HL))
+                    BIT2("BIT 2, (HL)",     0x56, 3, rb(HL))
 #undef BIT2
 
 #define BIT4(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, cpu.set_flags(!(o & 0x10) << SZ | MH, ~MC))
@@ -659,7 +659,7 @@ namespace gameboy::emulator
                     BIT4("BIT 4, E",        0x63, 2,     E)
                     BIT4("BIT 4, H",        0x64, 2,     H)
                     BIT4("BIT 4, L",        0x65, 2,     L)
-                    BIT4("BIT 4, (HL)",     0x66, 4, rb(HL))
+                    BIT4("BIT 4, (HL)",     0x66, 3, rb(HL))
 #undef BIT4
 
 #define BIT6(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, cpu.set_flags(!(o & 0x40) << SZ | MH, ~MC))
@@ -670,7 +670,7 @@ namespace gameboy::emulator
                     BIT6("BIT 6, E",        0x73, 2,     E)
                     BIT6("BIT 6, H",        0x74, 2,     H)
                     BIT6("BIT 6, L",        0x75, 2,     L)
-                    BIT6("BIT 6, (HL)",     0x76, 4, rb(HL))
+                    BIT6("BIT 6, (HL)",     0x76, 3, rb(HL))
 #undef BIT6
 
 #define BIT1(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, cpu.set_flags(!(o & 0x02) << SZ | MH, ~MC))
@@ -681,7 +681,7 @@ namespace gameboy::emulator
                     BIT1("BIT 1, E",        0x4B, 2,     E)
                     BIT1("BIT 1, H",        0x4C, 2,     H)
                     BIT1("BIT 1, L",        0x4D, 2,     L)
-                    BIT1("BIT 1, (HL)",     0x4E, 4, rb(HL))
+                    BIT1("BIT 1, (HL)",     0x4E, 3, rb(HL))
 #undef BIT1
 
 #define BIT3(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, cpu.set_flags(!(o & 0x08) << SZ | MH, ~MC))
@@ -692,7 +692,7 @@ namespace gameboy::emulator
                     BIT3("BIT 3, E",        0x5B, 2,     E)
                     BIT3("BIT 3, H",        0x5C, 2,     H)
                     BIT3("BIT 3, L",        0x5D, 2,     L)
-                    BIT3("BIT 3, (HL)",     0x5E, 4, rb(HL))
+                    BIT3("BIT 3, (HL)",     0x5E, 3, rb(HL))
 #undef BIT3
 
 #define BIT5(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, cpu.set_flags(!(o & 0x20) << SZ | MH, ~MC))
@@ -703,7 +703,7 @@ namespace gameboy::emulator
                     BIT5("BIT 5, E",        0x6B, 2,     E)
                     BIT5("BIT 5, H",        0x6C, 2,     H)
                     BIT5("BIT 5, L",        0x6D, 2,     L)
-                    BIT5("BIT 5, (HL)",     0x6E, 4, rb(HL))
+                    BIT5("BIT 5, (HL)",     0x6E, 3, rb(HL))
 #undef BIT5
 
 #define BIT7(mnemonic, opcode, cycles, o) ST(mnemonic, opcode, cycles, cpu.set_flags(!(o & 0x80) << SZ | MH, ~MC))
@@ -714,7 +714,7 @@ namespace gameboy::emulator
                     BIT7("BIT 7, E",        0x7B, 2,     E)
                     BIT7("BIT 7, H",        0x7C, 2,     H)
                     BIT7("BIT 7, L",        0x7D, 2,     L)
-                    BIT7("BIT 7, (HL)",     0x7E, 4, rb(HL))
+                    BIT7("BIT 7, (HL)",     0x7E, 3, rb(HL))
 #undef BIT7
 
 #define RES0(mnemonic, opcode, cycles, o, assign_method) \
