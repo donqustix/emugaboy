@@ -1,7 +1,7 @@
 # emugaboy
 
-Q: What's done at this moment?  
-A: All the CPU's instructions are implemented, and they pass Blargg's tests. The emulator fully supports such a game as Tetris.
+Q: What's done at the moment?  
+A: All the CPU's instructions are implemented, and they pass Blargg's tests. The emulator fully supports Tetris.
 
 ## Screenshots:
 #### Tests
