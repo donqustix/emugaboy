@@ -3,8 +3,6 @@
 
 #include "mmu.h"
 
-#include <iostream>
-
 namespace gameboy::emulator
 {
     class CPU
