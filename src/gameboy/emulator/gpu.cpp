@@ -65,19 +65,22 @@ void GPU::scanline() noexcept
 
 void GPU::write_oam_dma(unsigned index, unsigned value) noexcept
 {
+    oam[index] = value;
     if ((index & 2) ^ 2)
     {
         oam_indices.remove(index / 4 * 4);
         if (value && value < (index & 1 ? 168 : 160))
         {
             const int oam_index = index / 4 * 4;
+
             auto   iter  = oam_indices.begin();
             for (; iter != oam_indices.end(); ++iter)
             {
                 const unsigned x = oam[*iter + 1];
                 const unsigned y = oam[*iter    ];
-                if      (x  < value) oam_indices.insert(iter,  oam_index);
-                else if (x == value)
+
+                if      (x  < oam[oam_index + 1]) oam_indices.insert(iter,  oam_index);
+                else if (x == oam[oam_index + 1])
                 {
                     if (y == oam[oam_index])
                         *iter  = oam_index;
@@ -87,10 +90,10 @@ void GPU::write_oam_dma(unsigned index, unsigned value) noexcept
                 else continue;
                 break;
             }
-            if (iter == oam_indices.end()) oam_indices.insert(iter, oam_index);
+            if (iter == oam_indices.end())
+                oam_indices.insert(iter, oam_index);
         }
     }
-    oam[index] = value;
 }
 
 void GPU::write_lcd_control(unsigned value) noexcept

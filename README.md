@@ -1,7 +1,7 @@
 # emugaboy
 
 Q: What's done at the moment?  
-A: All the CPU's instructions are implemented, and they pass Blargg's tests. The emulator supports ROMs without a MBC chip. Timers, audio, and joypad are not supported.
+A: Almost all the CPU's instructions are implemented, and they pass Blargg's tests. The emulator supports ROMs without a MBC chip. Timers, audio, and joypad are not supported.
 
 ## Building
 The project requires g++ that supports C++17.  
@@ -15,7 +15,7 @@ make
 ```
 
 Now, you are ready for testing the program.  
-ROMs are placed in the 'res/roms' folder. A path to certain ROM is set in main.cpp  
+ROMs are placed in the 'res/roms' folder. A path to a particular ROM is set in main.cpp  
 Type 'make run' to run the program.
 
 ## Screenshots:
