@@ -16,17 +16,19 @@ Cartridge Cartridge::load(std::string_view filepath)
 
     std::vector<unsigned char> rom{std::istreambuf_iterator<char>{stream},
                                    std::istreambuf_iterator<char>{}};
-    std::clog << (unsigned)rom[0x0147] << std::endl;
-    std::vector<unsigned char> ram;
-    switch (mbc_type(rom)) {
-        case MBCs::MBC1: ram.resize(32768); break;
-    }
-    return {std::move(rom), std::move(ram)};
+    std::clog << "MBC type: " << (unsigned) rom[0x0147] << std::endl;
+
+    return Cartridge{std::move(rom)};
 }
 
-Cartridge::Cartridge(std::vector<unsigned char> rom,
-                     std::vector<unsigned char> ram) noexcept :
-    rom{std::move(rom)}, ram{std::move(ram)}
+Cartridge::Cartridge(std::vector<unsigned char> rom) noexcept : rom{std::move(rom)}
 {
+    switch (this->rom[0x0147]) {
+        case 1:
+        case 2:
+        case 3:
+            ram.resize(32768); type = MBCs::MBC1;
+        break;
+    }
 }
 
