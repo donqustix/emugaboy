@@ -54,6 +54,7 @@ namespace gameboy::emulator
         }
 
         void scanline_background() noexcept;
+        void scanline_window() noexcept;
         void scanline_sprites() noexcept;
         void scanline() noexcept;
     public:

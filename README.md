@@ -1,7 +1,7 @@
 # emugaboy
 
 Q: What's done at the moment?  
-A: Almost all the CPU's instructions are implemented, and they pass Blargg's tests. The emulator supports ROMs without a MBC chip. Timers, audio, and joypad are not supported.
+A: Almost all the CPU's instructions are implemented, and they pass Blargg's tests. The emulator supports ROMs without a MBC chip. Audio is not supported.
 
 ## Building
 The project requires g++ that supports C++17.  
@@ -41,3 +41,8 @@ Type 'make run' to run the program.
 ![alt tag](/res/images/kwirk/example_1.png)
 ![alt tag](/res/images/kwirk/example_2.png)
 
+![alt tag](/res/images/battlecity/example_1.png)
+![alt tag](/res/images/battlecity/example_2.png)
+
+![alt tag](/res/images/karateka/example_1.png)
+![alt tag](/res/images/karateka/example_2.png)

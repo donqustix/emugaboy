@@ -18,6 +18,26 @@ void GPU::scanline_background() noexcept
     }
 }
 
+void GPU::scanline_window() noexcept
+{
+    if (wx > 166 || ly < wy) return;
+
+    const int st = control & CONTROL_MASK_BG_WINDOW_TILE_DATA_SELECT     ? 0x0000 : 0x0800;
+    const int sm = control & CONTROL_MASK_WINDOW_TILE_MAP_DISPLAY_SELECT ? 0x1C00 : 0x1800;
+    for (int i = 0; i < 160; ++i)
+    {
+        if (wx + i < 7) continue;
+
+        const int im = sm + (i - wx + 7) / 8 + (ly - wy) / 8 * 32;
+        const int vm = st == 0x0000 ?               vram[im] :
+                                      (signed char) vram[im] + 128;
+        const unsigned px =
+            (vram[st + vm * 16 + (ly - wy) % 8 * 2    ] >> (7 - (i - wx + 7) % 8) & 1) |
+            (vram[st + vm * 16 + (ly - wy) % 8 * 2 + 1] >> (7 - (i - wx + 7) % 8) & 1) << 1;
+        set_framebuffer_pixel(wx - 7 + i + ly * 160, bgp >> (px * 2) & 3);
+    }
+}
+
 void GPU::scanline_sprites() noexcept
 {
     const int ss = control & CONTROL_MASK_OBJ_SIZE ? 16 : 8;
@@ -41,15 +61,14 @@ void GPU::scanline_sprites() noexcept
 
                 const int px_index = sx + i + ly * 160;
 
-                if (!(s_bg_p && get_framebuffer_pixel(px_index)))
-                {
-                    const int px_shift = sfx ? i % 8 : 7 - i % 8;
-                    const unsigned px =
-                            (vram[si    ] >> px_shift & 1) |
-                            (vram[si + 1] >> px_shift & 1) << 1;
-                    if (px)
-                        set_framebuffer_pixel(px_index, sp >> (px * 2) & 3);
-                }
+                if (s_bg_p && get_framebuffer_pixel(px_index))
+                    continue;
+                const int px_shift = sfx ? i % 8 : 7 - i % 8;
+                const unsigned px =
+                        (vram[si    ] >> px_shift & 1) |
+                        (vram[si + 1] >> px_shift & 1) << 1;
+                if (px)
+                    set_framebuffer_pixel(px_index, sp >> (px * 2) & 3);
             }
         }
     }
@@ -59,6 +78,8 @@ void GPU::scanline() noexcept
 {
     if (control & CONTROL_MASK_BG_DISPLAY)
         scanline_background();
+    if (control & CONTROL_MASK_WINDOW_DISPLAY_ENABLE)
+        scanline_window();
     if (control & CONTROL_MASK_OBJ_DISPLAY_ENABLE)
         scanline_sprites();
 }

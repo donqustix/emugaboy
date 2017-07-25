@@ -3,6 +3,8 @@
 #include "gameboy/emulator/gpu.h"
 #include "gameboy/emulator/mmu.h"
 #include "gameboy/emulator/dma.h"
+#include "gameboy/emulator/joypad.h"
+#include "gameboy/emulator/timer.h"
 
 #include <SDL2/SDL.h>
 
@@ -10,17 +12,21 @@
 
 int main()
 {
-    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/Tetris (World).gb")};
+    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/tests/instr_timing/instr_timing.gb")};
     gameboy::emulator::CPU cpu;
     gameboy::emulator::GPU gpu;
     unsigned char wram[0x2000], hram[0x7F];
     gameboy::emulator::MMU mmu;
     gameboy::emulator::DMA dma{&gpu, &mmu};
+    gameboy::emulator::Joypad joypad;
+    gameboy::emulator::Timer timer;
     gameboy::emulator::MMU::MemPointers mem_pointers;
     mem_pointers.cartridge = &cartridge;
     mem_pointers.gpu       = &gpu;
     mem_pointers.cpu       = &cpu;
     mem_pointers.dma       = &dma;
+    mem_pointers.joypad    = &joypad;
+    mem_pointers.timer     = &timer;
     mem_pointers.wram = wram;
     mem_pointers.hram = hram;
     mmu.set_mem_pointers(mem_pointers);
@@ -41,24 +47,34 @@ int main()
 
         previous_time = current_time;
 
-        for (static SDL_Event event; ::SDL_PollEvent(&event);)
+        ::SDL_PumpEvents();
+
+        const Uint8* const keyboard_state = ::SDL_GetKeyboardState(nullptr);
+        if (keyboard_state[SDL_SCANCODE_ESCAPE])
+            running = false;
+        const unsigned keys_mask = keyboard_state[SDL_SCANCODE_D] << 0 |
+                                   keyboard_state[SDL_SCANCODE_A] << 1 |
+                                   keyboard_state[SDL_SCANCODE_W] << 2 |
+                                   keyboard_state[SDL_SCANCODE_S] << 3 |
+                                   keyboard_state[SDL_SCANCODE_E] << 4 |
+                                   keyboard_state[SDL_SCANCODE_Q] << 5 |
+                                   keyboard_state[SDL_SCANCODE_X] << 6 |
+                                   keyboard_state[SDL_SCANCODE_Z] << 7;
+        joypad.push_key_states(keys_mask);
+
+        static bool triggered = false;
+             if (keyboard_state[SDL_SCANCODE_F]) triggered = true;
+        else if (triggered)
         {
-            static bool triggered = false;
-            if      (event.type == SDL_QUIT) running = false;
-            else if (event.type == SDL_KEYDOWN)
-                triggered = true;
-            else if (triggered)
+            std::ofstream stream{"res/images/screenshot.ppm", std::ios::out | std::ios::binary};
+            stream << "P6\n" << 160 << ' ' << 144 << '\n' << 255 << '\n';
+            for (int i = 0; i < 160 * 144; ++i)
             {
-                std::ofstream stream{"res/images/screenshot.ppm", std::ios::out | std::ios::binary};
-                stream << "P6\n" << 160 << ' ' << 144 << '\n' << 255 << '\n';
-                for (int i = 0; i < 160 * 144; ++i)
-                {
-                    const unsigned char px = 0xFF * (3 - gpu.get_framebuffer_pixel(i)) / 3;
-                    const unsigned char color[]{px, px, px};
-                    stream.write(reinterpret_cast<const char*>(color), 3);
-                }
-                triggered = false;
+                const unsigned char px = 0xFF * (3 - gpu.get_framebuffer_pixel(i)) / 3;
+                const unsigned char color[]{px, px, px};
+                stream.write(reinterpret_cast<const char*>(color), 3);
             }
+            triggered = false;
         }
 
         for (; acc_update_time >= seconds_per_update; acc_update_time -= seconds_per_update)
@@ -68,7 +84,11 @@ int main()
             {
                 const unsigned cycles = cpu.next_step(mmu); i += cycles;
                 dma.tick(cycles);
-                const unsigned interrupts = gpu.tick(cycles);
+
+                unsigned interrupts = 0;
+                interrupts      |= timer.tick(cycles);
+                interrupts      |=   gpu.tick(cycles);
+
                 cpu.request_interrupts(interrupts);
             }
             i -= insts_per_update;

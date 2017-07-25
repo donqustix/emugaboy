@@ -4,21 +4,28 @@
 #include "gpu.h"
 #include "cpu.h"
 #include "dma.h"
+#include "joypad.h"
+#include "timer.h"
 
 using gameboy::emulator::MMU;
 
 void MMU::write_byte(unsigned address, unsigned value) const noexcept
 {
          if (address < 0x8000);
-    else if (address < 0xA000) mem_pointers.gpu->write_ram(address - 0x8000, value);  //vram[address - 0x8000] = value;
+    else if (address < 0xA000) mem_pointers.gpu->write_ram(address - 0x8000, value);
     else if (address < 0xC000) mem_pointers.cartridge->write_ram(address - 0xA000, value);
     else if (address < 0xE000) mem_pointers.wram[address - 0xC000] = value;
     else if (address < 0xFE00) mem_pointers.wram[address - 0xE000] = value;
-    else if (address < 0xFEA0) mem_pointers.gpu->write_oam_cpu(address - 0xFE00, value);// oam[address - 0xFE00] = value;
+    else if (address < 0xFEA0) mem_pointers.gpu->write_oam_cpu(address - 0xFE00, value);
     else if (address < 0xFF00);
     else if (address < 0xFF80)
         switch (address)
         {
+            case 0xFF00: mem_pointers.joypad->write(value);             break;
+            case 0xFF04: mem_pointers.timer->internal_counter = 0;      break;
+            case 0xFF05: mem_pointers.timer->counter = value;           break;
+            case 0xFF06: mem_pointers.timer->modulo = value;            break;
+            case 0xFF07: mem_pointers.timer->control = value;           break;
             case 0xFF0F: mem_pointers.cpu->IF = value;                  break;
             case 0xFF40: mem_pointers.gpu->write_lcd_control(value);    break;
             case 0xFF41: mem_pointers.gpu->write_lcd_stat(value);       break;
@@ -46,15 +53,20 @@ void MMU::write_word(unsigned address, unsigned value) const noexcept
 unsigned MMU::read_byte(unsigned address) const noexcept
 {
          if (address < 0x8000) return mem_pointers.cartridge->read_rom(address);
-    else if (address < 0xA000) return mem_pointers.gpu->read_ram(address - 0x8000);// vram[address - 0x8000];
+    else if (address < 0xA000) return mem_pointers.gpu->read_ram(address - 0x8000);
     else if (address < 0xC000) return mem_pointers.cartridge->read_ram(address - 0xA000);
     else if (address < 0xE000) return mem_pointers.wram[address - 0xC000];
     else if (address < 0xFE00) return mem_pointers.wram[address - 0xE000];
-    else if (address < 0xFEA0) return mem_pointers.gpu->read_oam(address - 0xFE00);// oam[address - 0xFE00];
+    else if (address < 0xFEA0) return mem_pointers.gpu->read_oam(address - 0xFE00);
     else if (address < 0xFF00) return 0;
     else if (address < 0xFF80)
         switch (address)
         {
+            case 0xFF00: return mem_pointers.joypad->read();
+            case 0xFF04: return mem_pointers.timer->read_divider();
+            case 0xFF05: return mem_pointers.timer->counter;
+            case 0xFF06: return mem_pointers.timer->modulo;
+            case 0xFF07: return mem_pointers.timer->control & 0x07;
             case 0xFF0F: return mem_pointers.cpu->IF        | 0xE0;
             case 0xFF40: return mem_pointers.gpu->control;
             case 0xFF41: return mem_pointers.gpu->stat      | 0x80;

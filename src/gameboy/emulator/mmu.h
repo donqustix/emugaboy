@@ -7,16 +7,20 @@ namespace gameboy::emulator
     class GPU;
     class CPU;
     class DMA;
+    class Joypad;
+    class Timer;
 
     class MMU
     {
     public:
         struct MemPointers
         {
-            Cartridge* cartridge;
-            GPU*       gpu;
-            CPU*       cpu;
-            DMA*       dma;
+            Cartridge*      cartridge;
+            GPU*            gpu;
+            CPU*            cpu;
+            DMA*            dma;
+            Joypad*         joypad;
+            Timer*          timer;
             unsigned char* wram;
             unsigned char* hram;
         };
