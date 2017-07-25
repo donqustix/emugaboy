@@ -17,14 +17,14 @@ void MMU::write_byte(unsigned address, unsigned value) noexcept
         switch (mem_pointers.cartridge->get_mbc_type())
         {
             case MBCs::MBC1:
-                     if (address < 0x2000)     ram_enable = value & 0x0A;
-                else if (address < 0x4000) bank_rom_index = value & 0x1F;
+                     if (address < 0x2000)     ram_enable =                             value & 0x0A;
+                else if (address < 0x4000) bank_rom_index = (bank_rom_index & ~0x1F) | (value & 0x1F ? value & 0x1F : 1);
                 else if (address < 0x6000)
                 {
                     if (mode_select) bank_ram_index =                            value & 0x03;
                     else             bank_rom_index = (bank_rom_index & 0x1F) | (value & 0x60);
                 }
-                else if (address < 0x8000)    mode_select = value & 1;
+                else if (address < 0x8000) mode_select = value & 1;
             break;
         }
     }
@@ -73,8 +73,12 @@ unsigned MMU::read_byte(unsigned address) const noexcept
         switch (mem_pointers.cartridge->get_mbc_type())
         {
             case MBCs::MBC1: 
-                     if (address < 0x4000) return mem_pointers.cartridge->read_rom(address);
-                else if (address < 0x8000) return mem_pointers.cartridge->read_rom(address - 0x4000 + bank_rom_index * 0x4000);
+                if (address > 0x3FFF)
+                {
+                    if (mode_select) return mem_pointers.cartridge->read_rom(address - 0x4000 + (bank_rom_index & 0x1F) * 0x4000);
+                    else             return mem_pointers.cartridge->read_rom(address - 0x4000 +  bank_rom_index         * 0x4000);
+                }
+            break;
         }
         return mem_pointers.cartridge->read_rom(address);
     }
@@ -84,7 +88,12 @@ unsigned MMU::read_byte(unsigned address) const noexcept
         switch (mem_pointers.cartridge->get_mbc_type())
         {
             case MBCs::MBC1:
-                 if (ram_enable) return mem_pointers.cartridge->read_ram(address - 0xA000 + bank_ram_index * 0x2000);
+                if (ram_enable) 
+                {
+                    if (mode_select) return mem_pointers.cartridge->read_ram(address - 0xA000 + bank_ram_index * 0x2000);
+                    else             return mem_pointers.cartridge->read_ram(address - 0xA000);
+                }
+            break;
         }
         return 0xFF;
     }

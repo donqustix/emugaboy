@@ -12,7 +12,7 @@
 
 int main()
 {
-    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/SuperMarioLand.gb")};
+    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/Tetris (World).gb")};
     gameboy::emulator::CPU cpu;
     gameboy::emulator::GPU gpu;
     unsigned char wram[0x2000], hram[0x7F];
@@ -33,7 +33,7 @@ int main()
 
     ::SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS);
     SDL_Window* const window = ::SDL_CreateWindow("Emugaboy",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 2, 144 * 2, SDL_WINDOW_RESIZABLE);
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 160 * 4, 144 * 4, SDL_WINDOW_RESIZABLE);
     SDL_Renderer* const renderer = ::SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_Texture* const texture = ::SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
             SDL_TEXTUREACCESS_STREAMING, 160, 144);
@@ -56,8 +56,8 @@ int main()
                                    keyboard_state[SDL_SCANCODE_A] << 1 |
                                    keyboard_state[SDL_SCANCODE_W] << 2 |
                                    keyboard_state[SDL_SCANCODE_S] << 3 |
-                                   keyboard_state[SDL_SCANCODE_E] << 4 |
-                                   keyboard_state[SDL_SCANCODE_Q] << 5 |
+                                   keyboard_state[SDL_SCANCODE_Q] << 4 |
+                                   keyboard_state[SDL_SCANCODE_E] << 5 |
                                    keyboard_state[SDL_SCANCODE_X] << 6 |
                                    keyboard_state[SDL_SCANCODE_Z] << 7;
         joypad.push_key_states(keys_mask);

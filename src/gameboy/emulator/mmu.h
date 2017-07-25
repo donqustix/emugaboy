@@ -25,7 +25,7 @@ namespace gameboy::emulator
             unsigned char* hram;
         };
     private:
-        unsigned char bank_rom_index, bank_ram_index;
+        unsigned char bank_rom_index = 1, bank_ram_index = 0;
         MemPointers mem_pointers;
         bool ram_enable = false, mode_select = false;
     public:
