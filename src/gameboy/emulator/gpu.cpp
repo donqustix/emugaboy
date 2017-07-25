@@ -26,7 +26,8 @@ void GPU::scanline_window() noexcept
     const int sm = control & CONTROL_MASK_WINDOW_TILE_MAP_DISPLAY_SELECT ? 0x1C00 : 0x1800;
     for (int i = 0; i < 160; ++i)
     {
-        if (wx + i < 7) continue;
+             if (wx + i <   7) continue;
+        else if (wx + i > 166) break;
 
         const int im = sm + (i - wx + 7) / 8 + (ly - wy) / 8 * 32;
         const int vm = st == 0x0000 ?               vram[im] :
