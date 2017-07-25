@@ -30,6 +30,7 @@ Type 'make run' to run the program.
 ![alt tag](/res/images/cpu_tests/09-op_r,r.png)
 ![alt tag](/res/images/cpu_tests/10-bit_ops.png)
 ![alt tag](/res/images/cpu_tests/11-op_a,hl.png)
+![alt tag](/res/images/cpu_tests/instr_timing.png)
 #### Games
 ![alt tag](/res/images/tetris/example_1.png)
 ![alt tag](/res/images/tetris/example_2.png)
