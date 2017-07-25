@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <fstream>
 #include <iterator>
+#include <iostream>
 
 using gameboy::emulator::Cartridge;
 
@@ -15,6 +16,7 @@ Cartridge Cartridge::load(std::string_view filepath)
 
     std::vector<unsigned char> rom{std::istreambuf_iterator<char>{stream},
                                    std::istreambuf_iterator<char>{}};
+    std::clog << (unsigned)rom[0x0147] << std::endl;
     std::vector<unsigned char> ram;
     switch (mbc_type(rom)) {
         case MBCs::MBC1: ram.resize(32768); break;
