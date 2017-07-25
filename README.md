@@ -35,19 +35,16 @@ Type 'make run' to run the program.
 ![alt tag](/res/images/tetris/example_1.png)
 ![alt tag](/res/images/tetris/example_2.png)
 ![alt tag](/res/images/tetris/example_3.png)
-
 ![alt tag](/res/images/mario/example_1.png)
 ![alt tag](/res/images/mario/example_2.png)
-![alt tag](/res/images/megaman.png)
 
+![alt tag](/res/images/megaman.png)
 ![alt tag](/res/images/dr_mario/example_1.png)
 ![alt tag](/res/images/dr_mario/example_2.png)
-
 ![alt tag](/res/images/kwirk/example_1.png)
 ![alt tag](/res/images/kwirk/example_2.png)
 
 ![alt tag](/res/images/battlecity/example_1.png)
 ![alt tag](/res/images/battlecity/example_2.png)
-
 ![alt tag](/res/images/karateka/example_1.png)
 ![alt tag](/res/images/karateka/example_2.png)
