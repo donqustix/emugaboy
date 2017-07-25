@@ -5,7 +5,7 @@ namespace gameboy::emulator
 {
     enum class MBCs
     {
-        NONE, MBC1, MBC2, MBC3
+        MBC1 = 1
     };
 }
 

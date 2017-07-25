@@ -1,7 +1,7 @@
 # emugaboy
 
 Q: What's done at the moment?  
-A: Almost all the CPU's instructions are implemented, and they pass Blargg's tests. The emulator supports ROMs without a MBC chip. Audio is not supported.
+A: Almost all the CPU's instructions are implemented, and they pass Blargg's tests. The emulator supports ROMs with/without a MBC1 chip. Audio is not supported.
 
 ## Building
 The project requires g++ that supports C++17.  
@@ -35,6 +35,10 @@ Type 'make run' to run the program.
 ![alt tag](/res/images/tetris/example_1.png)
 ![alt tag](/res/images/tetris/example_2.png)
 ![alt tag](/res/images/tetris/example_3.png)
+
+![alt tag](/res/images/mario/example_1.png)
+![alt tag](/res/images/mario/example_2.png)
+![alt tag](/res/images/megaman.png)
 
 ![alt tag](/res/images/dr_mario/example_1.png)
 ![alt tag](/res/images/dr_mario/example_2.png)

@@ -1,17 +1,33 @@
 #include "mmu.h"
 
 #include "cartridge.h"
+#include "joypad.h"
+#include "timer.h"
+#include "mbcs.h"
 #include "gpu.h"
 #include "cpu.h"
 #include "dma.h"
-#include "joypad.h"
-#include "timer.h"
 
 using gameboy::emulator::MMU;
 
-void MMU::write_byte(unsigned address, unsigned value) const noexcept
+void MMU::write_byte(unsigned address, unsigned value) noexcept
 {
-         if (address < 0x8000);
+    if (address < 0x8000)
+    {
+        switch (mem_pointers.cartridge->get_mbc_type())
+        {
+            case MBCs::MBC1:
+                     if (address < 0x2000)     ram_enable = value & 0x0A;
+                else if (address < 0x4000) bank_rom_index = value & 0x1F;
+                else if (address < 0x6000)
+                {
+                    if (mode_select) bank_ram_index =                            value & 0x03;
+                    else             bank_rom_index = (bank_rom_index & 0x1F) | (value & 0x60);
+                }
+                else if (address < 0x8000)    mode_select = value & 1;
+            break;
+        }
+    }
     else if (address < 0xA000) mem_pointers.gpu->write_ram(address - 0x8000, value);
     else if (address < 0xC000) mem_pointers.cartridge->write_ram(address - 0xA000, value);
     else if (address < 0xE000) mem_pointers.wram[address - 0xC000] = value;
@@ -44,7 +60,7 @@ void MMU::write_byte(unsigned address, unsigned value) const noexcept
     else mem_pointers.cpu->IE = value;
 }
 
-void MMU::write_word(unsigned address, unsigned value) const noexcept
+void MMU::write_word(unsigned address, unsigned value) noexcept
 {
     write_byte(address    , value            );
     write_byte(address + 1, value >> 8 & 0xFF);
@@ -52,9 +68,26 @@ void MMU::write_word(unsigned address, unsigned value) const noexcept
 
 unsigned MMU::read_byte(unsigned address) const noexcept
 {
-         if (address < 0x8000) return mem_pointers.cartridge->read_rom(address);
+    if (address < 0x8000)
+    {
+        switch (mem_pointers.cartridge->get_mbc_type())
+        {
+            case MBCs::MBC1: 
+                     if (address < 0x4000) return mem_pointers.cartridge->read_rom(address);
+                else if (address < 0x8000) return mem_pointers.cartridge->read_rom(address - 0x4000 + bank_rom_index * 0x4000);
+        }
+        return mem_pointers.cartridge->read_rom(address);
+    }
     else if (address < 0xA000) return mem_pointers.gpu->read_ram(address - 0x8000);
-    else if (address < 0xC000) return mem_pointers.cartridge->read_ram(address - 0xA000);
+    else if (address < 0xC000)
+    {
+        switch (mem_pointers.cartridge->get_mbc_type())
+        {
+            case MBCs::MBC1:
+                 if (ram_enable) return mem_pointers.cartridge->read_ram(address - 0xA000 + bank_ram_index * 0x2000);
+        }
+        return 0xFF;
+    }
     else if (address < 0xE000) return mem_pointers.wram[address - 0xC000];
     else if (address < 0xFE00) return mem_pointers.wram[address - 0xE000];
     else if (address < 0xFEA0) return mem_pointers.gpu->read_oam(address - 0xFE00);

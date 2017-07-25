@@ -66,7 +66,7 @@ namespace gameboy::emulator
         struct ExecuteInstruction<0, opcode> 
         {
             // return a result of the opcode execution
-            static unsigned exec(CPU& cpu, const MMU& mmu) noexcept
+            static unsigned exec(CPU& cpu, MMU& mmu) noexcept
             {
                 [[maybe_unused]] auto rb = [&mmu](unsigned index) noexcept {return mmu.read_byte(index);};
                 [[maybe_unused]] auto rw = [&mmu](unsigned index) noexcept {return mmu.read_word(index);};
@@ -497,7 +497,7 @@ namespace gameboy::emulator
         template<unsigned opcode>
         struct ExecuteInstruction<1, opcode>
         {
-            static unsigned exec(CPU& cpu, const MMU& mmu) noexcept
+            static unsigned exec(CPU& cpu, MMU& mmu) noexcept
             {
                 [[maybe_unused]] auto rb = [&mmu](unsigned index) noexcept {return mmu.read_byte(index);};
                 [[maybe_unused]] auto rw = [&mmu](unsigned index) noexcept {return mmu.read_word(index);};
@@ -916,7 +916,7 @@ namespace gameboy::emulator
 
     public:
         void request_interrupts(unsigned mask) noexcept {IF |= mask;}
-        unsigned next_step(const MMU& mmu) noexcept;
+        unsigned next_step(MMU& mmu) noexcept;
     };
 }
 

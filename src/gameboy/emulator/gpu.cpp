@@ -29,12 +29,12 @@ void GPU::scanline_window() noexcept
              if (wx + i <   7) continue;
         else if (wx + i > 166) break;
 
-        const int im = sm + (i - wx + 7) / 8 + (ly - wy) / 8 * 32;
+        const int im = sm + i / 8 + (ly - wy) / 8 * 32;
         const int vm = st == 0x0000 ?               vram[im] :
                                       (signed char) vram[im] + 128;
         const unsigned px =
-            (vram[st + vm * 16 + (ly - wy) % 8 * 2    ] >> (7 - (i - wx + 7) % 8) & 1) |
-            (vram[st + vm * 16 + (ly - wy) % 8 * 2 + 1] >> (7 - (i - wx + 7) % 8) & 1) << 1;
+            (vram[st + vm * 16 + (ly - wy) % 8 * 2    ] >> (7 - i % 8) & 1) |
+            (vram[st + vm * 16 + (ly - wy) % 8 * 2 + 1] >> (7 - i % 8) & 1) << 1;
         set_framebuffer_pixel(wx - 7 + i + ly * 160, bgp >> (px * 2) & 3);
     }
 }
@@ -99,18 +99,12 @@ void GPU::write_oam_dma(unsigned index, unsigned value) noexcept
             for (; iter != oam_indices.end(); ++iter)
             {
                 const unsigned x = oam[*iter + 1];
-                const unsigned y = oam[*iter    ];
 
-                if      (x  < oam[oam_index + 1]) oam_indices.insert(iter,  oam_index);
-                else if (x == oam[oam_index + 1])
+                if (x  <= oam[oam_index + 1])
                 {
-                    if (y == oam[oam_index])
-                        *iter  = oam_index;
-                    else
-                        oam_indices.insert(iter, oam_index);
+                    oam_indices.insert(iter,  oam_index);
+                    break;
                 }
-                else continue;
-                break;
             }
             if (iter == oam_indices.end())
                 oam_indices.insert(iter, oam_index);

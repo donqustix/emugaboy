@@ -4,11 +4,11 @@
 namespace gameboy::emulator
 {
     class Cartridge;
+    class Joypad;
+    class Timer;
     class GPU;
     class CPU;
     class DMA;
-    class Joypad;
-    class Timer;
 
     class MMU
     {
@@ -25,13 +25,13 @@ namespace gameboy::emulator
             unsigned char* hram;
         };
     private:
+        unsigned char bank_rom_index, bank_ram_index;
         MemPointers mem_pointers;
-        unsigned char bank_rom_index = 1;
-        unsigned char bank_ram_index = 0;
+        bool ram_enable = false, mode_select = false;
     public:
         void set_mem_pointers(const MemPointers& mem_pointers) noexcept {this->mem_pointers = mem_pointers;}
-        void write_byte(unsigned address, unsigned value) const noexcept;
-        void write_word(unsigned address, unsigned value) const noexcept;
+        void write_byte(unsigned address, unsigned value) noexcept;
+        void write_word(unsigned address, unsigned value) noexcept;
         unsigned read_byte(unsigned address) const noexcept;
         unsigned read_word(unsigned address) const noexcept;
     };

@@ -2,7 +2,7 @@
 
 using gameboy::emulator::CPU;
 
-unsigned CPU::next_step(const MMU& mmu) noexcept
+unsigned CPU::next_step(MMU& mmu) noexcept
 {
     if (interrupt_master_enable)
     {
@@ -22,7 +22,7 @@ unsigned CPU::next_step(const MMU& mmu) noexcept
         }
     }
     // build a table of opcodes
-    static constexpr unsigned (*insts[512])(CPU& cpu, const MMU&) noexcept
+    static constexpr unsigned (*insts[512])(CPU& cpu, MMU&) noexcept
     {
 #define a(p,n) ExecuteInstruction<p, n    >::exec,   \
                ExecuteInstruction<p, n + 1>::exec,
