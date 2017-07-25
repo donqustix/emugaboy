@@ -21,8 +21,8 @@ void MMU::write_byte(unsigned address, unsigned value) noexcept
                 else if (address < 0x4000) bank_rom_index = (bank_rom_index & 0x60) | (value & 0x1F ? value & 0x1F : 1);
                 else if (address < 0x6000)
                 {
-                    if (mode_select) bank_ram_index =                            value & 3;
-                    else             bank_rom_index = (bank_rom_index & 0x1F) | (value & 3) << 5;
+                    if (mode_select) bank_ram_index =                            value & 0x03;
+                    else             bank_rom_index = (bank_rom_index & 0x1F) | (value & 0x60);
                 }
                 else if (address < 0x8000) mode_select = value & 1;
             break;

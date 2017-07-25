@@ -17,6 +17,7 @@ Cartridge Cartridge::load(std::string_view filepath)
     std::vector<unsigned char> rom{std::istreambuf_iterator<char>{stream},
                                    std::istreambuf_iterator<char>{}};
     std::clog << "MBC type: " << (unsigned) rom[0x0147] << std::endl;
+    std::clog << "ROM size: " << (unsigned) rom[0x0148] << std::endl;
 
     return Cartridge{std::move(rom)};
 }
