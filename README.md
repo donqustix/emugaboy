@@ -1,7 +1,7 @@
 # emugaboy
 
 Q: What's done at the moment?  
-A: Almost all the CPU's instructions are implemented, and they pass Blargg's tests. The emulator supports ROMs with/without a MBC1 chip. Audio is not supported.
+A: Almost all the CPU's instructions are implemented, and they pass Blargg's tests. The emulator supports ROMs with the MBC1 chip. Audio is not supported.
 
 ## Building
 The project requires g++ that supports C++17.  
