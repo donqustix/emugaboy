@@ -134,7 +134,7 @@ unsigned MMU::read_byte(unsigned address) const noexcept
             case 0xFF4A: return mem_pointers.gpu->wy;
             case 0xFF4B: return mem_pointers.gpu->wx;
             default:
-                return 0;
+                return 0xFF;
         }
     else if (address < 0xFFFF) return mem_pointers.hram[address - 0xFF80];
     else return mem_pointers.cpu->IE;
