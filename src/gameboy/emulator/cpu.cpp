@@ -4,21 +4,24 @@ using gameboy::emulator::CPU;
 
 unsigned CPU::next_step(MMU& mmu) noexcept
 {
-    if (interrupt_master_enable)
     {
         const unsigned mask = IF & IE & 0x1F;
         if (mask)
         {
-            interrupt_master_enable = false;
-            int i = 0;
-            for (; (mask >> i & 1) ^ 1; ++i)
-                 ;
-            IF &= ~(1 << i);
+            halt_mode = false;
+            if (interrupt_master_enable)
+            {
+                interrupt_master_enable = false;
+                int i = 0;
+                for (; (mask >> i & 1) ^ 1; ++i)
+                     ;
+                IF &= ~(1 << i);
 
-            static constexpr unsigned values[]{0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
-            mmu.write_word(regs.SP -= 2, regs.PC); regs.PC = values[i];
+                static constexpr unsigned values[]{0x0040, 0x0048, 0x0050, 0x0058, 0x0060};
+                mmu.write_word(regs.SP -= 2, regs.PC); regs.PC = values[i];
 
-            return 5;
+                return 5;
+            }
         }
     }
     // build a table of opcodes
@@ -37,6 +40,8 @@ unsigned CPU::next_step(MMU& mmu) noexcept
 #undef b
 #undef a
     };
+
+    if (halt_mode) return 1;
 
     unsigned opcode = mmu.read_byte(regs.PC++);
     if (opcode == 0xCB)

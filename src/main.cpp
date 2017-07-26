@@ -12,7 +12,7 @@
 
 int main()
 {
-    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/Castlevania.gb")};
+    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/tests/instr_timing/instr_timing.gb")};
     gameboy::emulator::CPU cpu;
     gameboy::emulator::GPU gpu;
     unsigned char wram[0x2000], hram[0x7F];

@@ -7,7 +7,7 @@ namespace gameboy::emulator
     {
         static constexpr unsigned INTERRUPT_MASK = 0b10000;
 
-        unsigned char reg = 0xCF, keys_maks = 0xFF;
+        unsigned char reg = 0x0F, keys_maks = 0xFF;
         bool interrupt = false;
 
     public:
