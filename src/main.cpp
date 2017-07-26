@@ -12,7 +12,7 @@
 
 int main()
 {
-    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/tests/instr_timing/instr_timing.gb")};
+    auto cartridge{gameboy::emulator::Cartridge::load("res/roms/SuperMarioLand.gb")};
     gameboy::emulator::CPU cpu;
     gameboy::emulator::GPU gpu;
     unsigned char wram[0x2000], hram[0x7F];
@@ -56,8 +56,8 @@ int main()
                                    keyboard_state[SDL_SCANCODE_A] << 1 |
                                    keyboard_state[SDL_SCANCODE_W] << 2 |
                                    keyboard_state[SDL_SCANCODE_S] << 3 |
-                                   keyboard_state[SDL_SCANCODE_Q] << 4 |
-                                   keyboard_state[SDL_SCANCODE_E] << 5 |
+                                   keyboard_state[SDL_SCANCODE_E] << 4 |
+                                   keyboard_state[SDL_SCANCODE_Q] << 5 |
                                    keyboard_state[SDL_SCANCODE_X] << 6 |
                                    keyboard_state[SDL_SCANCODE_Z] << 7;
         joypad.push_key_states(keys_mask);

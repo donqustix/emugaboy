@@ -91,7 +91,7 @@ namespace gameboy::emulator
                     // misc/control instructions
                     ST("NOP",      0x00, 1, )
                     ST("STOP",     0x10, 0, ) // !!!
-                    ST("HALT",     0x76, 1, cpu.halt_mode               = 1) // !!!
+                    ST("HALT",     0x76, 1, cpu.halt_mode               = 1)
                     ST("DI",       0xF3, 1, cpu.interrupt_master_enable = 0)
                     ST("EI",       0xFB, 1, cpu.ime_enable              = 1)
 
