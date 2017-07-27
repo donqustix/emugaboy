@@ -47,7 +47,9 @@ namespace gameboy::emulator
     private:
         unsigned char IE = 0;
         unsigned char IF = 0;
-        bool interrupt_master_enable, ime_enable = false, halt_mode = false;
+        bool interrupt_master_enable, halt_mode = false;
+
+        unsigned ime_enable_counter = 0;
 
         enum FlagMasks {
             MC = 0b0001'0000,
@@ -93,7 +95,7 @@ namespace gameboy::emulator
                     ST("STOP",     0x10, 0, ) // !!!
                     ST("HALT",     0x76, 1, cpu.halt_mode               = 1)
                     ST("DI",       0xF3, 1, cpu.interrupt_master_enable = 0)
-                    ST("EI",       0xFB, 1, cpu.ime_enable              = 1)
+                    ST("EI",       0xFB, 1, cpu.ime_enable_counter      = 2)
 
                     // 8-bit loads
                     ST("LD  B  , B",     0x40, 1, B = B) // !!!

@@ -48,8 +48,8 @@ unsigned CPU::next_step(MMU& mmu) noexcept
         opcode = mmu.read_byte(regs.PC++) + 256;
 
     const unsigned cycles = (insts[opcode])(*this, mmu);
-    if (ime_enable)
-        interrupt_master_enable = !(ime_enable = false);
+    if (ime_enable_counter)
+        if (!--ime_enable_counter) interrupt_master_enable = 1;
 
     return cycles;
 }
